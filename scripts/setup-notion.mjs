@@ -40,13 +40,14 @@ const categoryOptions = categoryNames.map((name, i) => ({
   color: schema.categoryColors[name] || FALLBACK_COLORS[i % FALLBACK_COLORS.length],
 }));
 
-// Property display order = insertion order. Title (Company) must be first.
+// Property display order = insertion order (Notion has no API to reorder later).
+// Ordered for a human workflow: identify the role → see when/where/status →
+// take the apply action → read the generated drafts → metadata last.
 const properties = {
-  [P.company]: { title: {} },
+  [P.company]: { title: {} }, // title must be first
   [P.role]: { rich_text: {} },
   [P.category]: { select: { options: categoryOptions } },
   [P.location]: { rich_text: {} },
-  [P.source]: { select: { options: schema.sourceOptions } },
   [P.datePosted]: { date: {} },
   [P.status]: { select: { options: schema.statusOptions } },
   [P.apply]: { checkbox: {} },
@@ -55,6 +56,7 @@ const properties = {
   [P.coverLetterDraft]: { rich_text: {} },
   [P.recruiterEmailDraft]: { rich_text: {} },
   [P.gmailDraftLink]: { url: {} },
+  [P.source]: { select: { options: schema.sourceOptions } },
   [P.description]: { rich_text: {} },
 };
 
@@ -62,6 +64,15 @@ const body = {
   parent: { type: "page_id", page_id: parentPageId },
   icon: { type: "emoji", emoji: "🎯" },
   title: [{ type: "text", text: { content: schema.databaseTitle } }],
+  description: [
+    {
+      type: "text",
+      text: {
+        content:
+          "Auto-updated internship tracker. Tick Apply ✅ on a row to generate a tailored resume, cover letter, and recruiter email. Tip: group by Status for a Kanban board, and hide 'Job Description' in your main views.",
+      },
+    },
+  ],
   properties,
 };
 
