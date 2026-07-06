@@ -60,7 +60,9 @@ writeFileSync(tmp, JSON.stringify(profile));
 console.log(`\nUploading ${FILE} → KV key "profile" (remote)...\n`);
 const result = spawnSync(
   "npx",
-  ["wrangler", "kv", "key", "put", "profile", "--binding", "JOBS", "--path", tmp, "--remote"],
+  // `--preview false` targets the production namespace (the binding has both
+  // an id and a preview_id, which wrangler otherwise treats as ambiguous).
+  ["wrangler", "kv", "key", "put", "profile", "--binding", "JOBS", "--path", tmp, "--remote", "--preview", "false"],
   { stdio: "inherit", shell: process.platform === "win32" },
 );
 
