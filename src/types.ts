@@ -33,6 +33,9 @@ export type RawJob = Omit<Job, "category"> & { categoryHint?: string };
 /** category name -> list of lowercase keyword substrings that map a title into it. */
 export type CategoryConfig = Record<string, string[]>;
 
+/** region/metro name -> list of matching city substrings (config/locations.json). */
+export type LocationConfig = Record<string, string[]>;
+
 /** The per-user profile stored in KV under key "profile". See config.schema.json. */
 export interface Profile {
   name: string;

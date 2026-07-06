@@ -1,5 +1,5 @@
-import type { Category, CategoryConfig, Job, Profile, RawJob } from "../types";
-import { looksLikeInternship, normalize } from "../util";
+import type { Category, CategoryConfig, Job, LocationConfig, Profile, RawJob } from "../types";
+import { looksLikeInternship, normalize, resolveLocation } from "../util";
 
 /**
  * Rule-based categorization — deliberately NO LLM here (keeps the scrape path
@@ -36,8 +36,10 @@ export interface FilterOptions {
   internshipsOnly: boolean;
   /** Category names to keep. Empty = keep all. */
   targetCategories: string[];
-  /** Location substrings to keep. Empty = keep all. */
+  /** Region/metro names to keep (must match keys in config/locations.json). Empty = keep all. */
   locations: string[];
+  /** region name -> matching city substrings, from config/locations.json. */
+  locationConfig: LocationConfig;
   /** Only keep postings dated within this many days. 0 = no date filtering. */
   maxAgeDays: number;
   /** For the Simplify source only, drop anything dated before this ISO date. "" = off. */
@@ -57,7 +59,31 @@ export function categorizeAndFilter(
   opts: FilterOptions,
 ): Job[] {
   const wantCategories = new Set(opts.targetCategories.map((c) => c.toLowerCase()));
-  const wantLocations = opts.locations.map((l) => l.toLowerCase()).filter(Boolean);
+
+  // Location targeting has two independent signals: a "Remote" region (matched
+  // via the resolveLocation isRemote flag) and physical metros (matched by city
+  // substrings from config). We expand only known config regions into city subs
+  // — an unknown/typo region contributes nothing rather than over-matching as a
+  // naked substring. Remote synonyms are excluded from city subs so a hybrid role
+  // that merely mentions "remote" can't match a physical-metro filter.
+  const REMOTE_WORDS = new Set(["remote", "anywhere", "work from home", "wfh", "distributed"]);
+  let wantsRemote = false;
+  const wantCitySubs: string[] = [];
+  for (const region of opts.locations) {
+    if (!region) continue;
+    if (region.toLowerCase() === "remote") {
+      wantsRemote = true;
+      continue;
+    }
+    const key = Object.keys(opts.locationConfig).find((k) => k.toLowerCase() === region.toLowerCase());
+    if (key) {
+      for (const sub of opts.locationConfig[key]) {
+        const s = sub.toLowerCase();
+        if (!REMOTE_WORDS.has(s)) wantCitySubs.push(s);
+      }
+    }
+  }
+  const hasLocationFilter = wantsRemote || wantCitySubs.length > 0;
 
   // Date window: keep only postings dated within the last `maxAgeDays` days.
   let cutoffIso = "";
@@ -93,15 +119,15 @@ export function categorizeAndFilter(
 
     if (wantCategories.size > 0 && !wantCategories.has(category.toLowerCase())) continue;
 
-    if (wantLocations.length > 0) {
-      const loc = normalize(raw.location);
-      const remoteOk = wantLocations.includes("remote") && /remote|anywhere/.test(loc);
-      const matched = remoteOk || wantLocations.some((l) => loc.includes(l));
+    // Relabel remote roles as "Remote" (hybrid keeps its city = in-person).
+    const { display: displayLoc, match: matchLoc, isRemote } = resolveLocation(raw.location);
+    if (hasLocationFilter) {
+      const matched = (wantsRemote && isRemote) || wantCitySubs.some((sub) => matchLoc.includes(sub));
       if (!matched) continue;
     }
 
     const { categoryHint: _hint, ...rest } = raw;
-    out.push({ ...rest, category });
+    out.push({ ...rest, location: displayLoc, category });
   }
   return out;
 }
@@ -112,11 +138,13 @@ export function filterOptionsFromProfile(
   internshipsOnly: boolean,
   maxAgeDays: number,
   simplifyMinDate: string,
+  locationConfig: LocationConfig,
 ): FilterOptions {
   return {
     internshipsOnly,
     targetCategories: profile.targetCategories ?? [],
     locations: profile.locations ?? [],
+    locationConfig,
     maxAgeDays,
     simplifyMinDate,
   };

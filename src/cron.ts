@@ -1,4 +1,5 @@
 import categoriesConfig from "../config/categories.json";
+import locationsConfig from "../config/locations.json";
 import greenhouseTokens from "../config/companies-greenhouse.json";
 import leverTokens from "../config/companies-lever.json";
 import ashbyTokens from "../config/companies-ashby.json";
@@ -15,7 +16,7 @@ import { categorizeAndFilter, filterOptionsFromProfile } from "./filters/categor
 import { syncJobsToNotion } from "./notion/sync";
 import { SeenStore, getCursor, setCursor, loadProfile } from "./storage";
 import { hashJob, mapLimit } from "./util";
-import type { CategoryConfig, Env, Job, RawJob } from "./types";
+import type { CategoryConfig, Env, Job, LocationConfig, RawJob } from "./types";
 
 type Platform = "greenhouse" | "lever" | "ashby";
 interface BoardTask {
@@ -72,6 +73,7 @@ export async function runScrape(env: Env): Promise<string> {
       env.INTERNSHIPS_ONLY !== "false",
       clampInt(env.MAX_AGE_DAYS, 31, 0, 3650),
       env.SIMPLIFY_MIN_DATE ?? "",
+      locationsConfig as LocationConfig,
     ),
   );
 

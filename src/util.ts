@@ -35,6 +35,22 @@ function fnv1a(str: string, seed: number): string {
   return (h >>> 0).toString(16).padStart(8, "0");
 }
 
+/**
+ * Resolve a raw location into a display label, a normalized `match` string, and
+ * an `isRemote` flag (normalizes once). Remote roles are relabeled "Remote" for
+ * display; hybrid counts as in-person (not remote). `match` is always the full
+ * normalized string so city matching still works even when a remote role also
+ * names a city — the caller matches the Remote region via `isRemote`, and city
+ * regions via `match`, keeping the two signals independent.
+ */
+export function resolveLocation(raw: string): { display: string; match: string; isRemote: boolean } {
+  const n = normalize(raw);
+  if (!n) return { display: "", match: "", isRemote: false };
+  const isHybrid = /hybrid/.test(n);
+  const isRemote = !isHybrid && /(^|[^a-z])(remote|anywhere|work from home|wfh|distributed)([^a-z]|$)/.test(n);
+  return { display: isRemote ? "Remote" : raw.trim(), match: n, isRemote };
+}
+
 /** True if a role title/description looks like an internship or co-op. */
 export function looksLikeInternship(text: string): boolean {
   const t = normalize(text);

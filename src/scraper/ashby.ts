@@ -4,6 +4,7 @@ import { fetchWithTimeout, toIsoDate } from "../util";
 interface AshbyJob {
   title: string;
   location?: string;
+  workplaceType?: string; // "Remote" | "Hybrid" | "OnSite"
   jobUrl?: string;
   applyUrl?: string;
   publishedAt?: string;
@@ -31,7 +32,8 @@ export async function fetchAshby(boardName: string): Promise<RawJob[]> {
   return jobs.map((j) => ({
     company: prettify(boardName),
     role: (j.title ?? "").trim(),
-    location: (j.location ?? "").trim(),
+    // Fully-remote → "Remote"; hybrid/on-site keep the city (hybrid = in-person).
+    location: j.workplaceType === "Remote" ? "Remote" : (j.location ?? "").trim(),
     url: j.jobUrl ?? j.applyUrl ?? "",
     datePosted: toIsoDate(j.publishedAt),
     // Raw text/HTML, truncated; cleaned at Notion-write time only.
