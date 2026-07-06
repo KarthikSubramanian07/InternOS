@@ -12,6 +12,7 @@ gmail-token.json
 # Dependencies & build
 node_modules/
 dist/
+coverage/
 .wrangler/
 *.tsbuildinfo
 
