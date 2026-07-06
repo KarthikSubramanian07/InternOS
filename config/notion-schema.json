@@ -1,0 +1,41 @@
+{
+  "_comment": "Canonical Notion database schema, shared by the Worker (src/notion/*) and the setup script (scripts/setup-notion.mjs) so property names never drift. Category select options are generated from config/categories.json plus 'Other'.",
+  "databaseTitle": "🎯 InternOS — Internship Tracker",
+  "properties": {
+    "company": "Company",
+    "role": "Role",
+    "category": "Category",
+    "location": "Location",
+    "link": "Link",
+    "source": "Source",
+    "datePosted": "Date Posted",
+    "status": "Status",
+    "apply": "Apply ✅",
+    "resumeDraft": "Resume Draft",
+    "coverLetterDraft": "Cover Letter Draft",
+    "recruiterEmailDraft": "Recruiter Email Draft",
+    "gmailDraftLink": "Gmail Draft Link",
+    "description": "Job Description"
+  },
+  "statusOptions": [
+    { "name": "Not Applied", "color": "gray" },
+    { "name": "Applied", "color": "blue" },
+    { "name": "Interview", "color": "yellow" },
+    { "name": "Offer", "color": "green" },
+    { "name": "Rejected", "color": "red" }
+  ],
+  "sourceOptions": [
+    { "name": "Greenhouse", "color": "green" },
+    { "name": "Lever", "color": "orange" },
+    { "name": "Ashby", "color": "purple" },
+    { "name": "GitHub", "color": "gray" }
+  ],
+  "categoryColors": {
+    "SWE": "blue",
+    "AI/ML": "purple",
+    "Quant": "green",
+    "EE": "orange",
+    "Data Science": "pink",
+    "Other": "default"
+  }
+}
