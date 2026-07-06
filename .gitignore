@@ -1,0 +1,22 @@
+# Personal config — NEVER commit. This is the whole point of the public/private split.
+private-config.json
+*.private.json
+
+# Secrets / env
+.env
+.env.*
+!.env.example
+.dev.vars
+gmail-token.json
+
+# Dependencies & build
+node_modules/
+dist/
+.wrangler/
+*.tsbuildinfo
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.log

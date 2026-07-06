@@ -1,0 +1,53 @@
+# Cloudflare Worker configuration for InternOS.
+#
+# This file is committed and contains NO secrets. All personal tokens/keys are
+# set with `wrangler secret put <NAME>` (see README) and the resume/profile
+# lives in KV, uploaded with `npm run setup:profile`.
+
+name = "internos"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Run the scraper on a schedule. Default: 13:00 and 01:00 UTC daily.
+# Cron triggers are included on the Workers free tier.
+[triggers]
+crons = ["0 1,13 * * *"]
+
+# KV namespace stores:
+#   - the set of already-seen job hashes (dedupe)
+#   - your private profile JSON (resume/preferences), key "profile"
+#
+# Create it once with:  wrangler kv namespace create JOBS
+# then paste the returned id below (and a preview_id for `wrangler dev`).
+[[kv_namespaces]]
+binding = "JOBS"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+preview_id = "REPLACE_WITH_YOUR_PREVIEW_KV_NAMESPACE_ID"
+
+# Non-secret, non-personal tuning knobs live here so they're visible in the repo.
+[vars]
+# Groq chat-completions model used for drafting. Any Groq-hosted model works.
+GROQ_MODEL = "llama-3.3-70b-versatile"
+# Only keep listings whose title looks like an internship / co-op.
+INTERNSHIPS_ONLY = "true"
+# --- Subrequest budget (Cloudflare free plan = 50 fetches per invocation) ---
+# Company boards are scanned in a rotating window: each run fetches this many
+# boards starting from a KV cursor, then advances. Over several runs the whole
+# company list gets covered. GitHub lists (huge yield, ~7 fetches) run every time.
+BOARD_FETCHES_PER_RUN = "20"
+# Cap new Notion rows created per run (each is one subrequest). Unwritten jobs
+# are picked up next run. Keep github(~7) + boards + new-rows under 50 on free.
+MAX_NEW_PER_RUN = "20"
+
+# ---------------------------------------------------------------------------
+# Secrets (DO NOT put values here — set with `wrangler secret put NAME`):
+#   NOTION_TOKEN          Notion internal integration token
+#   NOTION_DATABASE_ID    target database id
+#   GROQ_API_KEY          Groq API key (each user brings their own)
+#   GMAIL_CLIENT_ID       Google OAuth client id
+#   GMAIL_CLIENT_SECRET   Google OAuth client secret
+#   GMAIL_REFRESH_TOKEN   refresh token from `npm run auth:gmail`
+#   WEBHOOK_SECRET        random string; must match the token in the Notion
+#                         automation webhook URL (?token=...)
+# ---------------------------------------------------------------------------

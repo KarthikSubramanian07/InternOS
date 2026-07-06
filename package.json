@@ -1,0 +1,31 @@
+{
+  "name": "internos",
+  "version": "0.1.0",
+  "description": "Open-source internship application tracker + AI outreach assistant, running on Cloudflare Workers free tier.",
+  "license": "MIT",
+  "type": "module",
+  "private": false,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "scrape:local": "wrangler dev --test-scheduled",
+    "setup:notion": "node scripts/setup-notion.mjs",
+    "setup:profile": "node scripts/upload-profile.mjs",
+    "auth:gmail": "node scripts/gmail-oauth.mjs"
+  },
+  "keywords": [
+    "internships",
+    "job-tracker",
+    "cloudflare-workers",
+    "notion",
+    "groq",
+    "gmail",
+    "open-source"
+  ],
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250109.0",
+    "typescript": "^5.7.3",
+    "wrangler": "^4.0.0"
+  }
+}
