@@ -58,6 +58,8 @@ export interface Env {
   // vars (wrangler.toml [vars])
   GROQ_MODEL: string;
   INTERNSHIPS_ONLY: string;
+  MAX_AGE_DAYS: string;
+  SIMPLIFY_MIN_DATE: string;
   BOARD_FETCHES_PER_RUN: string;
   MAX_NEW_PER_RUN: string;
 

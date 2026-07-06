@@ -1,5 +1,5 @@
 import type { RawJob } from "../types";
-import { fetchWithTimeout, toIsoDate } from "../util";
+import { fetchWithTimeout, parseDateOrAge } from "../util";
 
 /**
  * The internship-list repos use three different layouts:
@@ -108,7 +108,7 @@ function parsePipeTables(markdown: string, repo: RepoSource): RawJob[] {
       extractUrl(cellAt(cells, cols.role)) ||
       (cols.company !== -1 ? extractUrl(cellAt(cells, cols.company)) : "") ||
       "";
-    const datePosted = cols.date !== -1 ? toIsoDate(cleanText(cellAt(cells, cols.date))) : null;
+    const datePosted = cols.date !== -1 ? parseDateOrAge(cleanText(cellAt(cells, cols.date))) : null;
 
     if (!company || !role || !url) continue;
     jobs.push({ company, role, location, url, datePosted, source: repo.source, categoryHint: repo.categoryHint });
@@ -148,7 +148,7 @@ function parseHtmlTables(markdown: string, repo: RepoSource): RawJob[] {
     const role = cleanCellHtml(cells[cols.role] ?? "");
     const location = cleanCellHtml(cells[cols.location] ?? "");
     const url = extractUrl(cells[cols.link] ?? "") || extractUrl(rawCompanyCell) || "";
-    const datePosted = toIsoDate(cleanCellHtml(cells[cols.date] ?? ""));
+    const datePosted = parseDateOrAge(cleanCellHtml(cells[cols.date] ?? ""));
 
     if (!company || !role || !url) continue;
     jobs.push({ company, role, location, url, datePosted, source: repo.source, categoryHint: repo.categoryHint });

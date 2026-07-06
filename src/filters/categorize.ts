@@ -41,7 +41,14 @@ export interface FilterOptions {
   targetCategories: string[];
   /** Location substrings to keep. Empty = keep all. */
   locations: string[];
+  /** Only keep postings dated within this many days. 0 = no date filtering. */
+  maxAgeDays: number;
+  /** For the Simplify source only, drop anything dated before this ISO date. "" = off. */
+  simplifyMinDate: string;
 }
+
+/** Source label for the SimplifyJobs list (used by the Simplify-only date cutoff). */
+const SIMPLIFY_SOURCE_PREFIX = "github:SimplifyJobs";
 
 /**
  * Categorize every raw job and apply the user's filters. Returns fully-formed
@@ -55,8 +62,29 @@ export function categorizeAndFilter(
   const wantCategories = new Set(opts.targetCategories.map((c) => c.toLowerCase()));
   const wantLocations = opts.locations.map((l) => l.toLowerCase()).filter(Boolean);
 
+  // Date window: keep only postings dated within the last `maxAgeDays` days.
+  let cutoffIso = "";
+  let todayIso = "";
+  if (opts.maxAgeDays > 0) {
+    const now = new Date();
+    todayIso = now.toISOString().slice(0, 10);
+    const cutoff = new Date(now);
+    cutoff.setUTCDate(cutoff.getUTCDate() - opts.maxAgeDays);
+    cutoffIso = cutoff.toISOString().slice(0, 10);
+  }
+
   const out: Job[] = [];
   for (const raw of raws) {
+    // Date filter: drop anything with no date or older than the window.
+    if (opts.maxAgeDays > 0) {
+      if (!raw.datePosted) continue;
+      if (raw.datePosted < cutoffIso || raw.datePosted > todayIso) continue;
+    }
+
+    // Simplify-only cutoff: everything before this date has been reviewed manually.
+    if (opts.simplifyMinDate && raw.source.startsWith(SIMPLIFY_SOURCE_PREFIX)) {
+      if (!raw.datePosted || raw.datePosted < opts.simplifyMinDate) continue;
+    }
     // GitHub lists are already curated internship boards, so only apply the
     // internship heuristic to the broad company-board pulls.
     const isCurated = raw.source.startsWith("github");
@@ -81,10 +109,17 @@ export function categorizeAndFilter(
 }
 
 /** Pull the filter options out of a profile + env, with sane defaults. */
-export function filterOptionsFromProfile(profile: Profile, internshipsOnly: boolean): FilterOptions {
+export function filterOptionsFromProfile(
+  profile: Profile,
+  internshipsOnly: boolean,
+  maxAgeDays: number,
+  simplifyMinDate: string,
+): FilterOptions {
   return {
     internshipsOnly,
     targetCategories: profile.targetCategories ?? [],
     locations: profile.locations ?? [],
+    maxAgeDays,
+    simplifyMinDate,
   };
 }

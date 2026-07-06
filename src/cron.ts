@@ -67,7 +67,12 @@ export async function runScrape(env: Env): Promise<string> {
   const matched = categorizeAndFilter(
     allRaw,
     categoriesConfig as CategoryConfig,
-    filterOptionsFromProfile(profile, env.INTERNSHIPS_ONLY !== "false"),
+    filterOptionsFromProfile(
+      profile,
+      env.INTERNSHIPS_ONLY !== "false",
+      clampInt(env.MAX_AGE_DAYS, 31, 0, 3650),
+      env.SIMPLIFY_MIN_DATE ?? "",
+    ),
   );
 
   // Dedupe within this run, then newest-first so fresh roles win the per-run cap.

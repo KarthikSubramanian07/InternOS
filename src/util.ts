@@ -6,14 +6,24 @@ export function normalize(s: string): string {
 }
 
 /**
- * Stable dedupe key for a job: company + role + url. Uses a fast synchronous
- * hash (not crypto) — dedupe needs no cryptographic strength, and hashing many
- * thousands of scraped rows with crypto.subtle would eat the Worker CPU budget.
- * Two FNV-1a passes with different seeds give a 16-hex, low-collision key.
+ * Stable dedupe identity for a job: company + role + location — deliberately NOT
+ * the url, so the SAME posting listed on multiple sources (Simplify links to the
+ * employer, Greenhouse links to its own board, etc.) collapses to one row. Uses a
+ * fast synchronous hash (not crypto) — dedupe needs no cryptographic strength and
+ * hashing thousands of rows with crypto.subtle would eat the Worker CPU budget.
  */
-export function hashJob(job: Pick<Job, "company" | "role" | "url">): string {
-  const basis = [normalize(job.company), normalize(job.role), normalize(job.url)].join("|");
+export function hashJob(job: Pick<Job, "company" | "role" | "location">): string {
+  const basis = [normalize(job.company), normalize(job.role), normalizeLocation(job.location)].join("|");
   return fnv1a(basis, 0x811c9dc5) + fnv1a(basis, 0x01000193);
+}
+
+/** Loose location normalization so "San Jose" and "San Jose, CA" dedupe together. */
+function normalizeLocation(loc: string): string {
+  const n = normalize(loc);
+  if (!n || /remote|anywhere|us|usa|united states/.test(n)) return n.split(/[,;]/)[0].trim();
+  // Keep only the first locality token (before a comma/semicolon) to fold
+  // "City, State" and "City" variants of the same posting together.
+  return n.split(/[,;]/)[0].trim();
 }
 
 function fnv1a(str: string, seed: number): string {
@@ -53,6 +63,42 @@ export function toIsoDate(input: unknown): string | null {
   }
   if (isNaN(d.getTime())) return null;
   return d.toISOString().slice(0, 10);
+}
+
+/** ISO date (YYYY-MM-DD) for `days` ago from now (UTC). */
+function isoDaysAgo(days: number): string {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() - days);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Parse a relative "age" string (as the GitHub lists use: "2d", "3w", "1mo",
+ * "5h", "yesterday") into an approximate ISO date. Returns null if it isn't an age.
+ */
+export function relativeAgeToIso(input: unknown): string | null {
+  if (typeof input !== "string") return null;
+  const t = input.trim().toLowerCase();
+  if (!t) return null;
+  if (t === "today" || t === "just posted" || t === "new") return isoDaysAgo(0);
+  if (t === "yesterday") return isoDaysAgo(1);
+  const m = t.match(/^(\d+)\s*(mo|months?|w|wks?|weeks?|d|days?|h|hrs?|hours?|min(?:ute)?s?|m|y|yrs?|years?)\b/);
+  if (!m) return null;
+  const n = parseInt(m[1], 10);
+  const unit = m[2];
+  let days: number;
+  if (/^mo|^month/.test(unit)) days = n * 30;
+  else if (/^w/.test(unit)) days = n * 7;
+  else if (/^d/.test(unit)) days = n;
+  else if (/^h/.test(unit)) days = 0;
+  else if (/^y/.test(unit)) days = n * 365;
+  else days = 0; // minutes
+  return isoDaysAgo(days);
+}
+
+/** Absolute date first, then relative age. Used for the GitHub list date/age columns. */
+export function parseDateOrAge(input: unknown): string | null {
+  return toIsoDate(input) ?? relativeAgeToIso(input);
 }
 
 /** UTF-8 → base64url (no padding). Used for the Gmail RFC-822 raw message. */
