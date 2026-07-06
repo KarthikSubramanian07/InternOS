@@ -26,8 +26,8 @@ crons = ["0 1,13 * * *", "*/10 * * * *"]
 # then paste the returned id below (and a preview_id for `wrangler dev`).
 [[kv_namespaces]]
 binding = "JOBS"
-id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
-preview_id = "REPLACE_WITH_YOUR_PREVIEW_KV_NAMESPACE_ID"
+id = "662de5bdd2b14ec99fbb0253132436fd"
+preview_id = "6a2528c013a44f8b8fde4116cf4bc9b9"
 
 # Non-secret, non-personal tuning knobs live here so they're visible in the repo.
 [vars]
@@ -35,6 +35,13 @@ preview_id = "REPLACE_WITH_YOUR_PREVIEW_KV_NAMESPACE_ID"
 GROQ_MODEL = "llama-3.3-70b-versatile"
 # Only keep listings whose title looks like an internship / co-op.
 INTERNSHIPS_ONLY = "true"
+# Only keep postings dated within this many days (recency window). "2d"/"3w"/"1mo"
+# age strings from the GitHub lists are parsed into real dates. Set "0" to disable.
+MAX_AGE_DAYS = "31"
+# SimplifyJobs-only cutoff: drop Simplify listings dated before this (you've already
+# reviewed older ones there manually). Other sources keep the full MAX_AGE_DAYS window.
+# Set "" to disable. ISO date (YYYY-MM-DD).
+SIMPLIFY_MIN_DATE = "2026-07-04"
 # --- Subrequest budget (Cloudflare free plan = 50 fetches per invocation) ---
 # Company boards are scanned in a rotating window: each run fetches this many
 # boards starting from a KV cursor, then advances. Over several runs the whole
