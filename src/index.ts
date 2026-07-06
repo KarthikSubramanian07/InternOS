@@ -1,15 +1,26 @@
 import type { Env } from "./types";
 import { runScrape } from "./cron";
+import { pollPendingDrafts } from "./poll";
 import { handleWebhook } from "./webhook/handler";
 import { landingPage } from "./landing";
 import { timingSafeEqual } from "./util";
 
+// The frequent cron only polls Notion for checked-but-undrafted rows; any other
+// cron entry runs a full scrape. Keep this in sync with `crons` in wrangler.toml.
+const POLL_CRON = "*/10 * * * *";
+
 export default {
-  /** Cron trigger: run the scrape + Notion sync. */
-  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
-    ctx.waitUntil(
-      runScrape(env).catch((err) => console.error("scrape failed:", (err as Error).stack ?? err)),
-    );
+  /** Cron trigger: frequent = draft poll; otherwise = scrape + Notion sync. */
+  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    if (event.cron === POLL_CRON) {
+      ctx.waitUntil(
+        pollPendingDrafts(env).catch((err) => console.error("poll failed:", (err as Error).stack ?? err)),
+      );
+    } else {
+      ctx.waitUntil(
+        runScrape(env).catch((err) => console.error("scrape failed:", (err as Error).stack ?? err)),
+      );
+    }
   },
 
   /** HTTP: Notion webhook, health, manual run, and a small status page. */

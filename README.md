@@ -179,7 +179,9 @@ npm run deploy
 
 Wrangler prints your Worker URL, e.g. `https://internos.<you>.workers.dev`.
 
-### 8. Connect the Notion → Worker webhook
+### 8. *(Optional)* Connect the Notion → Worker webhook for **instant** drafting
+
+**You can skip this entirely.** A cron poll runs every ~10 minutes and drafts any `Apply ✅`-checked row automatically — so checking a box gets you drafts within minutes with **zero Notion-UI setup**. Set up the webhook only if you want *instant* (sub-second) drafting:
 
 1. Open your Notion database → **•••** → **Automations** → **+ New automation**.
 2. Trigger: **`Apply ✅` is checked** (property changed to true).
@@ -190,6 +192,8 @@ Wrangler prints your Worker URL, e.g. `https://internos.<you>.workers.dev`.
    ```
 
    (Use the exact `WEBHOOK_SECRET` from step 4. This is how the Worker knows the request is really from your Notion.)
+
+> ℹ️ The "Send webhook" automation action requires a paid Notion plan on some workspaces. If you don't have it, just skip this step — the poll fallback covers you on the free plan.
 
 ### 9. Try it 🎉
 

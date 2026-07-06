@@ -45,21 +45,28 @@ export async function handleWebhook(
     return Response.json({ ok: false, error: "no page id in payload" }, { status: 400 });
   }
 
-  const guardKey = `drafted:${pageId}`;
-  if (await env.JOBS.get(guardKey)) {
-    return Response.json({ ok: true, status: "already-processed", pageId });
-  }
-  await env.JOBS.put(guardKey, "1", { expirationTtl: 86400 });
-
-  ctx.waitUntil(
-    processDrafting(pageId, env).catch(async (err) => {
-      console.error("drafting failed:", (err as Error).stack ?? err);
-      // Clear the guard so the user can uncheck/recheck to retry.
-      await env.JOBS.delete(guardKey);
-    }),
-  );
-
+  ctx.waitUntil(draftWithGuard(env, pageId));
   return Response.json({ ok: true, status: "processing", pageId });
+}
+
+/**
+ * Draft for one page, guarded against duplicate work. Shared by the webhook and
+ * the cron poll (src/poll.ts) so a checked box gets drafted exactly once whether
+ * it arrives via webhook or is discovered by polling. On failure the guard is
+ * cleared so it retries next poll / on re-check.
+ */
+export async function draftWithGuard(env: Env, pageId: string): Promise<"drafted" | "skipped" | "failed"> {
+  const guardKey = `drafted:${pageId}`;
+  if (await env.JOBS.get(guardKey)) return "skipped";
+  await env.JOBS.put(guardKey, "1", { expirationTtl: 86400 });
+  try {
+    await processDrafting(pageId, env);
+    return "drafted";
+  } catch (err) {
+    console.error("drafting failed:", (err as Error).stack ?? err);
+    await env.JOBS.delete(guardKey);
+    return "failed";
+  }
 }
 
 async function processDrafting(pageId: string, env: Env): Promise<void> {

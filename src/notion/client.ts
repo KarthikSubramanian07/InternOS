@@ -41,6 +41,13 @@ export class NotionClient {
   getPage(pageId: string): Promise<any> {
     return this.request(`/pages/${encodeURIComponent(pageId)}`, "GET");
   }
+
+  queryDatabase(databaseId: string, filter: unknown, pageSize = 25): Promise<any> {
+    return this.request(`/databases/${encodeURIComponent(databaseId)}/query`, "POST", {
+      filter,
+      page_size: pageSize,
+    });
+  }
 }
 
 // --- Property value builders -------------------------------------------------
