@@ -34,6 +34,7 @@
     "SWE": "blue",
     "AI/ML": "purple",
     "Quant": "green",
+    "Embedded Systems": "orange",
     "EE": "orange",
     "Data Science": "pink",
     "Other": "default"

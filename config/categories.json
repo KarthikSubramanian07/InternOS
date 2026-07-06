@@ -50,19 +50,27 @@
     "algorithmic trading",
     "trading intern"
   ],
-  "EE": [
-    "electrical engineer",
-    "electrical engineering",
-    "hardware intern",
-    "hardware engineer",
-    "asic",
-    "fpga",
+  "Embedded Systems": [
     "embedded",
+    "embedded systems",
+    "embedded software",
+    "embedded engineer",
+    "embedded c",
     "firmware",
-    "silicon",
+    "rtos",
+    "microcontroller",
+    "bare metal",
+    "device driver",
+    "board bring-up",
+    "hardware engineer",
+    "hardware intern",
+    "electrical engineer",
+    "fpga",
+    "asic",
     "rtl",
-    "vlsi",
-    "analog design",
-    "signal integrity"
+    "verilog",
+    "vhdl",
+    "soc",
+    "silicon"
   ]
 }
