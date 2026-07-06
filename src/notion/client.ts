@@ -43,6 +43,11 @@ export class NotionClient {
     return this.request(`/pages/${encodeURIComponent(pageId)}`, "GET");
   }
 
+  /** Archive (soft-delete → trash) a page. Used to remove Dismissed rows. */
+  archivePage(pageId: string): Promise<any> {
+    return this.request(`/pages/${encodeURIComponent(pageId)}`, "PATCH", { archived: true });
+  }
+
   queryDatabase(databaseId: string, filter: unknown, pageSize = 25): Promise<any> {
     return this.request(`/databases/${encodeURIComponent(databaseId)}/query`, "POST", {
       filter,
@@ -85,6 +90,7 @@ export function jobToCreateProperties(job: Job): Record<string, unknown> {
     [P.datePosted]: val.date(job.datePosted),
     [P.status]: val.select("Not Applied"),
     [P.apply]: val.checkbox(false),
+    [P.dismiss]: val.checkbox(false),
     // Clean the raw scraped HTML to plain text here — only for rows we actually
     // create, keeping stripHtml off the hot path over thousands of scraped jobs.
     [P.description]: val.richText(truncate(stripHtml(job.description ?? ""), 1900)),

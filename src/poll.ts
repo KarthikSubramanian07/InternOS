@@ -2,6 +2,7 @@ import type { Env } from "./types";
 import { NotionClient } from "./notion/client";
 import { P } from "./notion/schema";
 import { draftWithGuard } from "./webhook/handler";
+import { sleep } from "./util";
 
 /**
  * Poll fallback for drafting — makes the Notion "Send webhook" automation
@@ -15,37 +16,57 @@ export async function pollPendingDrafts(env: Env): Promise<string> {
   }
   const notion = new NotionClient(env.NOTION_TOKEN);
 
-  // Cap per poll so a burst of checked rows can't blow the subrequest budget;
-  // leftovers are picked up on the next poll.
-  const filter = {
-    and: [
-      { property: P.apply, checkbox: { equals: true } },
-      { property: P.resumeDraft, rich_text: { is_empty: true } },
-    ],
-  };
-
-  let result: any;
+  // 1) Remove rows the user dismissed (Dismiss ❌ checked) — archive to trash.
+  let dismissed = 0;
   try {
-    result = await notion.queryDatabase(env.NOTION_DATABASE_ID, filter, 8);
+    const dq = await notion.queryDatabase(
+      env.NOTION_DATABASE_ID,
+      { property: P.dismiss, checkbox: { equals: true } },
+      15,
+    );
+    for (const page of dq.results ?? []) {
+      try {
+        await notion.archivePage(page.id);
+        dismissed++;
+        await sleep(340); // pace under Notion's ~3 req/s limit
+      } catch (err) {
+        console.warn("archive failed:", (err as Error).message);
+      }
+    }
   } catch (err) {
-    console.error("poll query failed:", (err as Error).message);
-    return `poll query failed: ${(err as Error).message}`;
+    console.warn("dismiss query failed:", (err as Error).message);
   }
 
-  const pages: any[] = result.results ?? [];
-  if (!pages.length) return "poll: nothing pending";
-
+  // 2) Draft rows where Apply ✅ is checked but the Resume Draft is still empty.
+  // Cap per poll so a burst can't blow the subrequest budget; the rest come next poll.
   let drafted = 0;
   let skipped = 0;
   let failed = 0;
-  for (const page of pages) {
-    const outcome = await draftWithGuard(env, page.id);
-    if (outcome === "drafted") drafted++;
-    else if (outcome === "skipped") skipped++;
-    else failed++;
+  let pending = 0;
+  try {
+    const result = await notion.queryDatabase(
+      env.NOTION_DATABASE_ID,
+      {
+        and: [
+          { property: P.apply, checkbox: { equals: true } },
+          { property: P.resumeDraft, rich_text: { is_empty: true } },
+        ],
+      },
+      8,
+    );
+    const pages: any[] = result.results ?? [];
+    pending = pages.length;
+    for (const page of pages) {
+      const outcome = await draftWithGuard(env, page.id);
+      if (outcome === "drafted") drafted++;
+      else if (outcome === "skipped") skipped++;
+      else failed++;
+    }
+  } catch (err) {
+    console.error("poll draft query failed:", (err as Error).message);
   }
 
-  const summary = `poll: ${pages.length} pending → drafted=${drafted}, skipped=${skipped}, failed=${failed}`;
+  const summary = `poll: dismissed=${dismissed}, pending=${pending} → drafted=${drafted}, skipped=${skipped}, failed=${failed}`;
   console.log(summary);
   return summary;
 }
