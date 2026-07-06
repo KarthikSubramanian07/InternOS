@@ -1,6 +1,5 @@
 import type { RawJob } from "../types";
 import { fetchWithTimeout, toIsoDate } from "../util";
-import { stripHtml } from "./html";
 
 interface GreenhouseJob {
   title: string;
@@ -32,16 +31,11 @@ export async function fetchGreenhouse(boardToken: string): Promise<RawJob[]> {
     location: (j.location?.name ?? "").trim(),
     url: j.absolute_url,
     datePosted: toIsoDate(j.updated_at),
-    description: stripHtml(decodeMaybe(j.content)),
+    // Store the raw (entity-encoded) HTML, truncated. It's cleaned to plain text
+    // only when a row is actually written to Notion — see jobToCreateProperties.
+    description: (j.content ?? "").slice(0, 3000),
     source: "greenhouse",
   }));
-}
-
-/** Greenhouse sometimes returns HTML-entity-encoded content strings. */
-function decodeMaybe(content?: string): string {
-  if (!content) return "";
-  // The API returns already-escaped HTML; stripHtml handles the common entities.
-  return content;
 }
 
 function prettifyToken(token: string): string {

@@ -1,6 +1,5 @@
 import type { RawJob } from "../types";
 import { fetchWithTimeout, toIsoDate } from "../util";
-import { stripHtml } from "./html";
 
 interface LeverPosting {
   text: string;
@@ -33,7 +32,8 @@ export async function fetchLever(company: string): Promise<RawJob[]> {
     location: (p.categories?.location ?? "").trim(),
     url: p.hostedUrl ?? p.applyUrl ?? "",
     datePosted: toIsoDate(p.createdAt),
-    description: p.descriptionPlain?.trim() || stripHtml(p.description),
+    // Raw text/HTML, truncated; cleaned at Notion-write time only.
+    description: (p.descriptionPlain || p.description || "").slice(0, 3000),
     source: "lever",
   }));
 }

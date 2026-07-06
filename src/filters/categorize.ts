@@ -9,19 +9,16 @@ import { looksLikeInternship, normalize } from "../util";
  * Precedence:
  *   1. keyword hit in the role title
  *   2. the source's category hint (single-topic GitHub lists)
- *   3. keyword hit anywhere in the description
- *   4. "Other"
+ *   3. "Other"
+ *
+ * We match on the title only (not the description) — internship titles almost
+ * always name the discipline, and scanning thousands of 4KB descriptions per run
+ * blows the Worker CPU budget.
  */
 export function categorize(raw: RawJob, config: CategoryConfig): Category {
-  const title = normalize(raw.role);
-  const titleHit = firstMatch(title, config);
+  const titleHit = firstMatch(normalize(raw.role), config);
   if (titleHit) return titleHit;
-
   if (raw.categoryHint) return raw.categoryHint;
-
-  const descHit = firstMatch(normalize(raw.description ?? ""), config);
-  if (descHit) return descHit;
-
   return "Other";
 }
 
@@ -86,9 +83,10 @@ export function categorizeAndFilter(
       if (!raw.datePosted || raw.datePosted < opts.simplifyMinDate) continue;
     }
     // GitHub lists are already curated internship boards, so only apply the
-    // internship heuristic to the broad company-board pulls.
+    // internship heuristic to the broad company-board pulls. Title-only — scanning
+    // full descriptions across thousands of rows exceeds the Worker CPU budget.
     const isCurated = raw.source.startsWith("github");
-    if (opts.internshipsOnly && !isCurated && !looksLikeInternship(`${raw.role} ${raw.description ?? ""}`)) {
+    if (opts.internshipsOnly && !isCurated && !looksLikeInternship(raw.role)) {
       continue;
     }
     const category = categorize(raw, config);

@@ -1,6 +1,5 @@
 import type { RawJob } from "../types";
 import { fetchWithTimeout, toIsoDate } from "../util";
-import { stripHtml } from "./html";
 
 interface AshbyJob {
   title: string;
@@ -35,7 +34,8 @@ export async function fetchAshby(boardName: string): Promise<RawJob[]> {
     location: (j.location ?? "").trim(),
     url: j.jobUrl ?? j.applyUrl ?? "",
     datePosted: toIsoDate(j.publishedAt),
-    description: j.descriptionPlain?.trim() || stripHtml(j.descriptionHtml),
+    // Raw text/HTML, truncated; cleaned at Notion-write time only.
+    description: (j.descriptionPlain || j.descriptionHtml || "").slice(0, 3000),
     source: "ashby",
   }));
 }

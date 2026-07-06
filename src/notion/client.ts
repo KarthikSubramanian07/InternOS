@@ -1,5 +1,6 @@
 import type { DraftResult, Job } from "../types";
 import { fetchWithTimeout, truncate } from "../util";
+import { stripHtml } from "../scraper/html";
 import { P, platformLabel } from "./schema";
 
 const NOTION_API = "https://api.notion.com/v1";
@@ -84,7 +85,9 @@ export function jobToCreateProperties(job: Job): Record<string, unknown> {
     [P.datePosted]: val.date(job.datePosted),
     [P.status]: val.select("Not Applied"),
     [P.apply]: val.checkbox(false),
-    [P.description]: val.richText(truncate(job.description ?? "", 1900)),
+    // Clean the raw scraped HTML to plain text here — only for rows we actually
+    // create, keeping stripHtml off the hot path over thousands of scraped jobs.
+    [P.description]: val.richText(truncate(stripHtml(job.description ?? ""), 1900)),
   };
 }
 
