@@ -45,7 +45,7 @@ export function landingPage(): string {
     <h1>InternOS</h1>
     <p>Your internship tracker &amp; outreach assistant is running.</p>
     <div class="badge"><span class="dot"></span> Worker online</div>
-    <p class="foot">Open-source · <a href="https://github.com/internos/internos">github.com/internos</a></p>
+    <p class="foot">Open-source · <a href="https://github.com/KarthikSubramanian07/InternOS">GitHub</a> · <a href="https://buymeacoffee.com/winnerkarthik">☕ Support</a></p>
   </div>
 </body>
 </html>`;

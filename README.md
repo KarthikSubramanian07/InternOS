@@ -12,6 +12,7 @@ You bring a resume and a Groq key. It brings the grind.
 ![Runs on](https://img.shields.io/badge/runs%20on-Cloudflare%20Workers-orange.svg)
 ![Cost](https://img.shields.io/badge/cost-%240%2Fmo-brightgreen.svg)
 ![LLM](https://img.shields.io/badge/LLM-Groq%20(BYO%20key)-8A2BE2.svg)
+[![CI](https://github.com/KarthikSubramanian07/InternOS/actions/workflows/ci.yml/badge.svg)](https://github.com/KarthikSubramanian07/InternOS/actions/workflows/ci.yml)
 
 </div>
 
@@ -212,9 +213,11 @@ Everything worth tuning is a plain config file or an env var — **no code chang
 
 | I want to… | Edit |
 | --- | --- |
-| Add/remove role categories or keywords (add "PM", "Data Science", drop "EE") | [`config/categories.json`](config/categories.json) |
+| Add/remove role categories or keywords (add "PM", "Data Science", "Embedded Systems") | [`config/categories.json`](config/categories.json) |
+| Define/edit location metros (which cities count as "Bay Area", "SoCal", …) | [`config/locations.json`](config/locations.json) |
 | Track more companies | [`config/companies-greenhouse.json`](config/companies-greenhouse.json), `-lever.json`, `-ashby.json` |
 | Change *your* target categories, locations, tone, resume | `private-config.json` → re-run `npm run setup:profile` |
+| Only keep recent postings (default: last 31 days) | `MAX_AGE_DAYS` in [`wrangler.toml`](wrangler.toml) (`0` = off) |
 | Scrape more/less often | `crons` in [`wrangler.toml`](wrangler.toml) |
 | Use a different Groq model | `GROQ_MODEL` in `wrangler.toml` |
 | Include non-intern roles too | set `INTERNSHIPS_ONLY = "false"` |
@@ -296,9 +299,36 @@ You didn't share the parent page with your integration. Open the page → **•�
 
 ---
 
+## 🧪 Development & CI
+
+```bash
+npm run typecheck      # tsc --noEmit
+npm test               # vitest unit tests (filters, parsers, location logic, Notion mapping)
+npm run test:coverage  # coverage report
+npm run ci             # typecheck + test + dry-run bundle (what CI runs)
+```
+
+- **CI** (`.github/workflows/ci.yml`) runs typecheck + tests + a dry-run build on every push and PR.
+- **CD** (`.github/workflows/deploy.yml`) deploys to Cloudflare on every push to `main`. Add a repo secret **`CLOUDFLARE_API_TOKEN`** (Settings → Secrets → Actions; create it with the "Edit Cloudflare Workers" template) to enable it. Worker secrets (Notion/Groq/Gmail) live in Cloudflare and persist across deploys.
+
+**Want a standalone top-level database** (not nested under a page)? Create a blank full-page database in Notion, share it with your integration, then:
+```bash
+npm run setup:notion:configure <DATABASE_URL>   # renames columns + adds the InternOS schema
+```
+
+**Removing listings:** tick **`Dismiss ❌`** on any row — the Worker archives it within ~10 minutes (same poll that generates drafts).
+
 ## Contributing
 
-PRs welcome — especially new/updated company board tokens, additional GitHub source parsers, and category keyword improvements. The scrape path is intentionally LLM-free; please keep it that way. Run `npm run typecheck` before opening a PR.
+PRs welcome — especially new/updated company board tokens, additional GitHub source parsers, and category/location keyword improvements. The scrape path is intentionally LLM-free; please keep it that way. Run `npm run ci` before opening a PR.
+
+## ☕ Support
+
+InternOS is free and open-source. If it helped you land interviews (or just saved you hours), you can support the work:
+
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/winnerkarthik)
+
+→ **[buymeacoffee.com/winnerkarthik](https://buymeacoffee.com/winnerkarthik)**
 
 ## License
 
