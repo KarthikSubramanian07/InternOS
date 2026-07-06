@@ -9,14 +9,17 @@ main = "src/index.ts"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
-# Schedules (cron triggers are free on Workers):
+# ⏸️  PAUSED (2026-07-06): no scheduled runs — nothing calls Notion/Groq/Gmail on a
+# schedule. The Worker stays deployed but idle. To RESUME, restore the crons line
+# below (uncomment it, remove `crons = []`) and run `npm run deploy`.
+#
+# Original schedules:
 #   - "0 1,13 * * *"  scrape + Notion sync, twice daily (13:00 / 01:00 UTC)
-#   - "*/10 * * * *"  lightweight poll: draft any Apply-checked rows. This makes
-#                     the Notion "Send webhook" automation OPTIONAL — checking a
-#                     box gets drafted within ~10 min with zero Notion-UI setup.
-#                     (Keep this string in sync with POLL_CRON in src/index.ts.)
+#   - "*/10 * * * *"  lightweight poll: draft Apply-checked rows / archive Dismissed rows
+#                     (keep this string in sync with POLL_CRON in src/index.ts)
 [triggers]
-crons = ["0 1,13 * * *", "*/10 * * * *"]
+crons = []
+# crons = ["0 1,13 * * *", "*/10 * * * *"]
 
 # KV namespace stores:
 #   - the set of already-seen job hashes (dedupe)
