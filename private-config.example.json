@@ -1,0 +1,17 @@
+{
+  "name": "Ada Lovelace",
+  "email": "ada@example.com",
+  "phone": "",
+  "school": "Analytical University",
+  "gradYear": 2027,
+  "links": {
+    "github": "https://github.com/ada",
+    "linkedin": "https://linkedin.com/in/ada",
+    "portfolio": "https://ada.dev"
+  },
+  "resumeText": "Paste your full resume / background here as plain text. Include projects, internships, coursework, skills, and anything you want the drafting model to be able to reference. Example: 'CS + Math double major, GPA 3.9. Built a distributed key-value store in Rust; interned at Foo Corp on the payments team where I cut p99 latency 40%. Comfortable in Python, TypeScript, Go, and C++...'",
+  "targetCategories": ["SWE", "AI/ML", "Quant"],
+  "locations": ["Remote", "New York", "San Francisco"],
+  "remotePreference": "any",
+  "tone": "concise, confident, specific, no clichés or filler"
+}

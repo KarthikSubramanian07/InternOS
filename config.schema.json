@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/your-user/internos/config.schema.json",
+  "title": "InternOS private profile",
+  "description": "Shape of the per-user profile stored in Cloudflare KV under key \"profile\". This file documents the schema ONLY — real values live in your gitignored private-config.json and are uploaded with `npm run setup:profile`. Secrets (Notion token, Groq key, Gmail tokens) are NOT here — they are Cloudflare Worker secrets.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "resumeText", "targetCategories"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Your full name, used in cover letters / emails."
+    },
+    "email": {
+      "type": "string",
+      "description": "Your email address, used in email sign-offs (not the recruiter's).",
+      "default": ""
+    },
+    "phone": {
+      "type": "string",
+      "description": "Optional phone number for email sign-offs.",
+      "default": ""
+    },
+    "school": {
+      "type": "string",
+      "description": "University / program name.",
+      "default": ""
+    },
+    "gradYear": {
+      "type": "integer",
+      "description": "Expected graduation year.",
+      "minimum": 2024,
+      "maximum": 2035
+    },
+    "links": {
+      "type": "object",
+      "description": "Optional portfolio links surfaced to the LLM.",
+      "additionalProperties": { "type": "string" },
+      "examples": [{ "github": "https://github.com/you", "linkedin": "https://linkedin.com/in/you" }]
+    },
+    "resumeText": {
+      "type": "string",
+      "description": "Plain-text dump of your resume / background. The LLM reads this to tailor drafts. Paste as much relevant detail as you like."
+    },
+    "targetCategories": {
+      "type": "array",
+      "description": "Category names (must match keys in config/categories.json) you want to keep. Empty array = keep every category.",
+      "items": { "type": "string" },
+      "examples": [["SWE", "AI/ML", "Quant"]]
+    },
+    "locations": {
+      "type": "array",
+      "description": "Preferred locations (substring match). Empty = no location filtering.",
+      "items": { "type": "string" },
+      "default": [],
+      "examples": [["Remote", "New York", "San Francisco", "Seattle"]]
+    },
+    "remotePreference": {
+      "type": "string",
+      "description": "Informational hint for drafting; does not hard-filter unless a location is in `locations`.",
+      "enum": ["any", "remote", "onsite", "hybrid"],
+      "default": "any"
+    },
+    "tone": {
+      "type": "string",
+      "description": "Voice/style instruction passed to the drafting LLM.",
+      "default": "concise, confident, specific, no clichés or filler"
+    }
+  }
+}
