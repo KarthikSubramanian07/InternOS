@@ -38,7 +38,7 @@ export default {
 
     // Manual scrape trigger, protected by the same shared secret as the webhook.
     if (url.pathname === "/run" && req.method === "POST") {
-      if (!timingSafeEqual(url.searchParams.get("token") ?? "", env.WEBHOOK_SECRET ?? "")) {
+      if (!env.WEBHOOK_SECRET || !timingSafeEqual(url.searchParams.get("token") ?? "", env.WEBHOOK_SECRET)) {
         return new Response("forbidden", { status: 403 });
       }
       const summary = await runScrape(env);

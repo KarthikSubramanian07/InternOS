@@ -23,7 +23,9 @@ export async function handleWebhook(
 ): Promise<Response> {
   const url = new URL(req.url);
   const token = url.searchParams.get("token") ?? req.headers.get("x-internos-token") ?? "";
-  if (!timingSafeEqual(token, env.WEBHOOK_SECRET ?? "")) {
+  // Reject outright if the secret isn't configured — otherwise an empty secret
+  // would make timingSafeEqual("","") true and leave the endpoint wide open.
+  if (!env.WEBHOOK_SECRET || !timingSafeEqual(token, env.WEBHOOK_SECRET)) {
     return new Response("forbidden", { status: 403 });
   }
 

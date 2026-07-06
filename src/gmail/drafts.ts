@@ -68,13 +68,18 @@ async function getAccessToken(env: Env): Promise<string> {
 /** Build a minimal RFC-822 message. Subject is RFC-2047 encoded for non-ASCII. */
 function buildMime(msg: { subject: string; body: string; to?: string }): string {
   const headers = [
-    `To: ${msg.to ?? ""}`,
-    `Subject: ${encodeSubject(msg.subject)}`,
+    `To: ${headerSafe(msg.to ?? "")}`,
+    `Subject: ${encodeSubject(headerSafe(msg.subject))}`,
     "MIME-Version: 1.0",
     'Content-Type: text/plain; charset="UTF-8"',
     "Content-Transfer-Encoding: 8bit",
   ];
   return `${headers.join("\r\n")}\r\n\r\n${msg.body}`;
+}
+
+/** Strip CR/LF so a header value (subject/to) can't inject extra MIME headers. */
+export function headerSafe(v: string): string {
+  return v.replace(/[\r\n]+/g, " ").trim();
 }
 
 function encodeSubject(subject: string): string {
