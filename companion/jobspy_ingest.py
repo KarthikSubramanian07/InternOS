@@ -30,6 +30,7 @@ import datetime as dt
 import requests
 
 try:
+    import numpy as np
     from jobspy import scrape_jobs
 except ImportError:
     sys.exit("Missing dependency. Run: pip install python-jobspy requests")
@@ -84,7 +85,8 @@ def iso_date(v) -> str:
 def normalize(row) -> dict | None:
     title = str(row.get("title") or "").strip()
     company = str(row.get("company") or "").strip()
-    url = str(row.get("job_url") or "").strip()
+    # Prefer the direct employer link when JobSpy resolves one.
+    url = str(row.get("job_url_direct") or row.get("job_url") or "").strip()
     if not title or not company or not url:
         return None
     # Keep it internship-focused; the Worker filters again, this just trims payload.
@@ -121,6 +123,7 @@ def main():
             df = scrape_jobs(
                 site_name=SITES,
                 search_term=term,
+                google_search_term=f"{term} jobs",  # Google Jobs needs this or returns nothing
                 location=LOCATION,
                 results_wanted=RESULTS,
                 hours_old=HOURS_OLD,
@@ -131,6 +134,8 @@ def main():
         except Exception as e:  # one term/site failing shouldn't kill the run
             print(f"scrape failed for '{term}': {e}", file=sys.stderr)
             continue
+        # pandas NaN is not valid JSON; turn it into None before serializing.
+        df = df.replace({np.nan: None})
         for _, row in df.iterrows():
             job = normalize(row.to_dict())
             if job:
