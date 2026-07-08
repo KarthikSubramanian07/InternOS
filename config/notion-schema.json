@@ -5,6 +5,8 @@
     "company": "Company",
     "role": "Role",
     "category": "Category",
+    "fit": "Fit",
+    "matchScore": "Match %",
     "location": "Location",
     "link": "Link",
     "source": "Source",
@@ -30,6 +32,13 @@
     { "name": "Lever", "color": "orange" },
     { "name": "Ashby", "color": "purple" },
     { "name": "GitHub", "color": "gray" }
+  ],
+  "fitOptions": [
+    { "name": "Strong", "color": "green" },
+    { "name": "Good", "color": "blue" },
+    { "name": "Moderate", "color": "yellow" },
+    { "name": "Weak", "color": "orange" },
+    { "name": "Poor", "color": "red" }
   ],
   "categoryColors": {
     "SWE": "blue",

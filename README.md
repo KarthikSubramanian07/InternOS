@@ -2,9 +2,9 @@
 
 # 🎯 InternOS
 
-### Your internship hunt, on autopilot — for $0.
+### Your internship hunt, on autopilot, for $0.
 
-**InternOS scrapes thousands of internship listings, drops the ones you care about into a beautiful Notion board, and — the moment you tick a checkbox — writes you a tailored resume, cover letter, and recruiter email, then stages a Gmail draft ready to send.**
+**InternOS scrapes thousands of internship listings, drops the ones you care about into a beautiful Notion board, and, the moment you tick a checkbox, writes you a tailored resume, cover letter, and recruiter email, then stages a Gmail draft ready to send.**
 
 You bring a resume and a Groq key. It brings the grind.
 
@@ -20,13 +20,14 @@ You bring a resume and a Groq key. It brings the grind.
 
 ## Why this exists
 
-Applying to internships is two jobs: **finding the postings** and **writing the applications**. Both are soul-crushing at scale, and both are automatable — so InternOS automates them, without ever sending anything on your behalf or leaking your data.
+Applying to internships is two jobs: **finding the postings** and **writing the applications**. Both are soul-crushing at scale, and both are automatable, so InternOS automates them, without ever sending anything on your behalf or leaking your data.
 
 - 🔎 **Finds roles for you.** Pulls from Greenhouse, Lever, and Ashby job boards plus five community-maintained GitHub internship lists (Simplify, vanshb03, speedyapply ×2, northwesternfintech). Thousands of listings, deduped and categorized.
-- 🗂️ **Organizes them in Notion.** A clean, color-coded database you actually enjoy looking at — filter by category, track status Kanban-style, see what's fresh.
-- ✍️ **Drafts your application in one click.** Check a box → Groq writes resume bullets, a cover letter, and a recruiter email *tailored to that exact role and your background* — then stages a Gmail draft. You review and hit send. Always you.
+- 🗂️ **Organizes them in Notion.** A clean, color-coded database you actually enjoy looking at, filter by category, track status Kanban-style, see what's fresh.
+- 📊 **Ranks them for you.** Every listing gets a rule-based **Match %** and a **Fit** verdict (Strong / Good / Moderate / Weak / Poor) computed from your background, so you sort and apply to the best ones first. No LLM cost, so every row arrives pre-ranked.
+- ✍️ **Drafts your application in one click.** Check a box → Groq writes resume bullets, a cover letter, and a recruiter email *tailored to that exact role and your background*, then stages a Gmail draft. A second reviewer pass tightens the writing, and the output is kept free of em-dashes, clichés, and fabricated claims. You review and hit send. Always you.
 - 🆓 **Costs nothing.** Everything runs on free tiers: Cloudflare Workers (compute + cron), Cloudflare KV (storage), Groq (LLM), Notion, Gmail API.
-- 🔒 **Keeps your data yours.** The code is open-source and public. *Your resume, preferences, and keys never touch the repo* — they live only in your own Cloudflare account.
+- 🔒 **Keeps your data yours.** The code is open-source and public. *Your resume, preferences, and keys never touch the repo*, they live only in your own Cloudflare account.
 
 ---
 
@@ -40,10 +41,10 @@ InternOS is split down the middle, on purpose:
 | Config *shape* and seed company lists | Your Notion token, Groq key, Gmail token (Cloudflare **secrets**) |
 | Zero personal data. Zero credentials. | Stored in **your** Cloudflare KV + secret store |
 
-A stranger can clone this repo and have a fully working tool the moment they drop in their own `private-config.json` and set their own secrets. That's what makes it genuinely shareable — **there's nothing of yours in here to leak.**
+A stranger can clone this repo and have a fully working tool the moment they drop in their own `private-config.json` and set their own secrets. That's what makes it genuinely shareable, **there's nothing of yours in here to leak.**
 
 > ### 🔑 On API keys (the "how do OSS projects handle this?" question)
-> The standard, correct answer: **bring-your-own-key (BYO).** InternOS never ships a key and never proxies through a shared one — that would cost the maintainer money and be a security nightmare. Instead, *each user* creates a **free** Groq account (10 seconds, no credit card) and sets their own key as a Cloudflare secret. Same for Notion and Gmail. Your keys, your quotas, your control. Groq's free tier (30 req/min, 1,000 req/day on Llama 3.3 70B) is *wildly* more than one person applying to internships will ever touch.
+> The standard, correct answer: **bring-your-own-key (BYO).** InternOS never ships a key and never proxies through a shared one, that would cost the maintainer money and be a security nightmare. Instead, *each user* creates a **free** Groq account (10 seconds, no credit card) and sets their own key as a Cloudflare secret. Same for Notion and Gmail. Your keys, your quotas, your control. Groq's free tier (30 req/min, 1,000 req/day on Llama 3.3 70B) is *wildly* more than one person applying to internships will ever touch.
 
 ---
 
@@ -67,7 +68,7 @@ A stranger can clone this repo and have a fully working tool the moment they dro
                         └───────────────────────────────────────────────┘
 ```
 
-The LLM is used **only** for drafting — never for scraping or filtering (that's fast, free, rule-based keyword matching). No wasted tokens, no rate-limit risk on the crawl.
+The LLM is used **only** for drafting, never for scraping or filtering (that's fast, free, rule-based keyword matching). No wasted tokens, no rate-limit risk on the crawl.
 
 ---
 
@@ -83,7 +84,7 @@ All free. Grab these before you start:
 
 ---
 
-## Setup — start to finish (~20 minutes)
+## Setup, start to finish (~20 minutes)
 
 ### 0. Clone & install
 
@@ -116,7 +117,7 @@ Copy the returned `id` (and create a `preview_id` with `--preview` if you want `
 npm run setup:notion <YOUR_PARENT_PAGE_ID>
 ```
 
-This builds a **polished, color-coded database** — Category / Status / Source selects with sensible colors, an Apply ☑️ checkbox, draft fields, and a 🎯 icon. It prints your new **database ID** and suggests the nicest views to add (Kanban by Status, table grouped by Category, an "active outreach" filter).
+This builds a **polished, color-coded database**, Category / Status / Source selects with sensible colors, an Apply ☑️ checkbox, draft fields, and a 🎯 icon. It prints your new **database ID** and suggests the nicest views to add (Kanban by Status, table grouped by Category, an "active outreach" filter).
 
 4. Save the token + database ID as secrets (and drop them in `.env` for local runs):
 
@@ -142,7 +143,7 @@ wrangler secret put WEBHOOK_SECRET         # paste it
 
 ### 5. *(Optional)* Wire up Gmail drafts
 
-Skip this and everything still works — you just won't get auto-staged Gmail drafts (the email text still lands in Notion). To enable:
+Skip this and everything still works, you just won't get auto-staged Gmail drafts (the email text still lands in Notion). To enable:
 
 1. In [Google Cloud Console](https://console.cloud.google.com): create a project → enable the **Gmail API** → create an **OAuth client ID** of type **Desktop app**.
 2. Put the client id/secret in `.env` as `GMAIL_CLIENT_ID` / `GMAIL_CLIENT_SECRET`.
@@ -152,7 +153,7 @@ Skip this and everything still works — you just won't get auto-staged Gmail dr
 npm run auth:gmail
 ```
 
-It opens Google's consent screen (requesting **only** `gmail.compose` — draft creation, **never** send), then prints your refresh token. Save all three as secrets:
+It opens Google's consent screen (requesting **only** `gmail.compose`, draft creation, **never** send), then prints your refresh token. Save all three as secrets:
 
 ```bash
 wrangler secret put GMAIL_CLIENT_ID
@@ -164,7 +165,7 @@ wrangler secret put GMAIL_REFRESH_TOKEN
 
 ### 6. Fill in your profile & upload it
 
-Edit **`private-config.json`** — your name, school, grad year, resume text, target categories/locations, and writing tone. (See [`config.schema.json`](config.schema.json) for every field.) Then:
+Edit **`private-config.json`**, your name, school, grad year, resume text, target categories/locations, and writing tone. (See [`config.schema.json`](config.schema.json) for every field.) Then:
 
 ```bash
 npm run setup:profile
@@ -182,7 +183,7 @@ Wrangler prints your Worker URL, e.g. `https://internos.<you>.workers.dev`.
 
 ### 8. *(Optional)* Connect the Notion → Worker webhook for **instant** drafting
 
-**You can skip this entirely.** A cron poll runs every ~10 minutes and drafts any `Apply ✅`-checked row automatically — so checking a box gets you drafts within minutes with **zero Notion-UI setup**. Set up the webhook only if you want *instant* (sub-second) drafting:
+**You can skip this entirely.** A cron poll runs every ~10 minutes and drafts any `Apply ✅`-checked row automatically, so checking a box gets you drafts within minutes with **zero Notion-UI setup**. Set up the webhook only if you want *instant* (sub-second) drafting:
 
 1. Open your Notion database → **•••** → **Automations** → **+ New automation**.
 2. Trigger: **`Apply ✅` is checked** (property changed to true).
@@ -194,7 +195,7 @@ Wrangler prints your Worker URL, e.g. `https://internos.<you>.workers.dev`.
 
    (Use the exact `WEBHOOK_SECRET` from step 4. This is how the Worker knows the request is really from your Notion.)
 
-> ℹ️ The "Send webhook" automation action requires a paid Notion plan on some workspaces. If you don't have it, just skip this step — the poll fallback covers you on the free plan.
+> ℹ️ The "Send webhook" automation action requires a paid Notion plan on some workspaces. If you don't have it, just skip this step, the poll fallback covers you on the free plan.
 
 ### 9. Try it 🎉
 
@@ -203,13 +204,13 @@ Wrangler prints your Worker URL, e.g. `https://internos.<you>.workers.dev`.
 curl -X POST "https://internos.<you>.workers.dev/run?token=YOUR_WEBHOOK_SECRET"
 ```
 
-Watch rows appear in Notion. Then **tick the `Apply ✅` box on any row** — within a few seconds the Resume Draft, Cover Letter Draft, and Recruiter Email Draft fields fill in, and (if you set up Gmail) a draft link appears. Done.
+Watch rows appear in Notion. Then **tick the `Apply ✅` box on any row**, within a few seconds the Resume Draft, Cover Letter Draft, and Recruiter Email Draft fields fill in, and (if you set up Gmail) a draft link appears. Done.
 
 ---
 
 ## Make it yours
 
-Everything worth tuning is a plain config file or an env var — **no code changes needed.**
+Everything worth tuning is a plain config file or an env var, **no code changes needed.**
 
 | I want to… | Edit |
 | --- | --- |
@@ -223,7 +224,7 @@ Everything worth tuning is a plain config file or an env var — **no code chang
 | Include non-intern roles too | set `INTERNSHIPS_ONLY = "false"` |
 | Rename the Notion columns | [`config/notion-schema.json`](config/notion-schema.json) (before running `setup:notion`) |
 
-> **Finding a company's board token:** it's the slug in their careers URL — `boards.greenhouse.io/`**`stripe`**, `jobs.lever.co/`**`palantir`**, `jobs.ashbyhq.com/`**`openai`**. Add it to the matching JSON list. The seed lists are a starting point; extend them freely (some tokens may 404 — that's fine, they're skipped silently).
+> **Finding a company's board token:** it's the slug in their careers URL, `boards.greenhouse.io/`**`stripe`**, `jobs.lever.co/`**`palantir`**, `jobs.ashbyhq.com/`**`openai`**. Add it to the matching JSON list. The seed lists are a starting point; extend them freely (some tokens may 404, that's fine, they're skipped silently).
 
 ---
 
@@ -231,11 +232,11 @@ Everything worth tuning is a plain config file or an env var — **no code chang
 
 Cloudflare's **free** Workers plan allows **50 subrequests per invocation**. Scraping 150+ company boards *and* creating Notion rows would blow past that in a single run, so InternOS is built to stay under budget:
 
-- **GitHub lists run every time** — ~7 fetches for thousands of listings. Best yield per subrequest by far.
+- **GitHub lists run every time**, ~7 fetches for thousands of listings. Best yield per subrequest by far.
 - **Company boards rotate.** Each run scans a window of `BOARD_FETCHES_PER_RUN` (default 20) boards, advancing a cursor stored in KV. Over several runs, the whole list gets covered.
 - **New Notion rows are capped** at `MAX_NEW_PER_RUN` (default 20) per run; the rest are picked up next run (they're only marked "seen" once actually created).
 
-**So the first day or two is a warm-up** — coverage builds run by run, then settles into a steady trickle of genuinely new postings. Want it faster? The [Workers Paid plan](https://developers.cloudflare.com/workers/platform/pricing/) ($5/mo) raises the limit to 1,000 subrequests — bump both env vars way up and it covers everything each run.
+**So the first day or two is a warm-up**, coverage builds run by run, then settles into a steady trickle of genuinely new postings. Want it faster? The [Workers Paid plan](https://developers.cloudflare.com/workers/platform/pricing/) ($5/mo) raises the limit to 1,000 subrequests, bump both env vars way up and it covers everything each run.
 
 Groq's free tier (1,000 req/day) and KV's free tier (100k reads / 1k writes per day) are never close to a constraint at one-human scale.
 
@@ -271,24 +272,24 @@ internos/
 <details>
 <summary><b>No rows appear after <code>/run</code></b></summary>
 
-- Did you upload your profile? `npm run setup:profile` — the scrape no-ops without it.
+- Did you upload your profile? `npm run setup:profile`, the scrape no-ops without it.
 - Check logs: `wrangler tail`. Look for the `InternOS scrape:` summary line.
 - If `matched=0`, your `targetCategories`/`locations` filters may be too narrow. Empty the arrays to keep everything, or widen keywords in `categories.json`.
-- Early runs create few rows by design (see *free tier* above) — give it a few cron cycles.
+- Early runs create few rows by design (see *free tier* above), give it a few cron cycles.
 </details>
 
 <details>
 <summary><b>Ticking Apply ✅ doesn't draft anything</b></summary>
 
 - Confirm the automation URL includes `?token=YOUR_WEBHOOK_SECRET` and it matches your secret exactly (403 = mismatch).
-- `wrangler tail` and watch for `drafting failed:` — usually a missing `GROQ_API_KEY` or profile.
+- `wrangler tail` and watch for `drafting failed:`, usually a missing `GROQ_API_KEY` or profile.
 - Re-firing is idempotent for 24h. To force a re-draft, uncheck and re-check the box (a failed attempt clears the guard automatically).
 </details>
 
 <details>
 <summary><b><code>npm run auth:gmail</code> gives no refresh token</b></summary>
 
-Google only returns a refresh token on first consent. Revoke prior access at [myaccount.google.com/permissions](https://myaccount.google.com/permissions) and re-run — we always request `prompt=consent`.
+Google only returns a refresh token on first consent. Revoke prior access at [myaccount.google.com/permissions](https://myaccount.google.com/permissions) and re-run, we always request `prompt=consent`.
 </details>
 
 <details>
@@ -316,11 +317,11 @@ npm run ci             # typecheck + test + dry-run bundle (what CI runs)
 npm run setup:notion:configure <DATABASE_URL>   # renames columns + adds the InternOS schema
 ```
 
-**Removing listings:** tick **`Dismiss ❌`** on any row — the Worker archives it within ~10 minutes (same poll that generates drafts).
+**Removing listings:** tick **`Dismiss ❌`** on any row, the Worker archives it within ~10 minutes (same poll that generates drafts).
 
 ## Contributing
 
-PRs welcome — especially new/updated company board tokens, additional GitHub source parsers, and category/location keyword improvements. The scrape path is intentionally LLM-free; please keep it that way. Run `npm run ci` before opening a PR.
+PRs welcome, especially new/updated company board tokens, additional GitHub source parsers, and category/location keyword improvements. The scrape path is intentionally LLM-free; please keep it that way. Run `npm run ci` before opening a PR.
 
 ## ☕ Support
 
@@ -332,4 +333,4 @@ InternOS is free and open-source. If it helped you land interviews (or just save
 
 ## License
 
-[MIT](LICENSE) — do whatever you want, just don't blame us. Built for students, by people who remember the grind. ❤️
+[MIT](LICENSE), do whatever you want, just don't blame us. Built for students, by people who remember the grind. ❤️

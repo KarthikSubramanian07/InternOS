@@ -28,6 +28,8 @@ export function orderedColumns() {
   return [
     [P.role, { rich_text: {} }],
     [P.category, { select: { options: categoryOptions() } }],
+    [P.fit, { select: { options: schema.fitOptions } }],
+    [P.matchScore, { number: { format: "number" } }],
     [P.location, { rich_text: {} }],
     [P.datePosted, { date: {} }],
     [P.status, { select: { options: schema.statusOptions } }],

@@ -57,6 +57,17 @@ export function looksLikeInternship(text: string): boolean {
   return /(^|\b)(intern|internship|co-?op)(\b|s|ship|$)/.test(t);
 }
 
+/**
+ * Guarantee no em/en dashes in generated text, regardless of what the model does.
+ * A spaced dash (clause break) becomes ", "; an unspaced dash (e.g. "3–5") becomes "-".
+ */
+export function stripDashes(s: string): string {
+  if (!s) return "";
+  return s
+    .replace(/\s+[—–]\s+/g, ", ")
+    .replace(/[—–]/g, "-");
+}
+
 /** Clamp a string to a max length (Notion rich_text caps at 2000 chars per block). */
 export function truncate(s: string, max = 1900): string {
   if (!s) return "";

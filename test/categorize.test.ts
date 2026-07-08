@@ -40,6 +40,7 @@ function opts(overrides: Partial<FilterOptions> = {}): FilterOptions {
     locationConfig: LOCATIONS,
     maxAgeDays: 0,
     simplifyMinDate: "",
+    resumeText: "python typescript react distributed systems machine learning",
     ...overrides,
   };
 }

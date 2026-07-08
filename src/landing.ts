@@ -1,5 +1,5 @@
 /**
- * A tiny, self-contained status page served at `/`. No secrets, no data — just
+ * A tiny, self-contained status page served at `/`. No secrets, no data, just
  * confirmation the Worker is live plus links. Kept deliberately minimal so the
  * public endpoint reveals nothing about the owner.
  */

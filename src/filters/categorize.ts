@@ -1,5 +1,6 @@
 import type { Category, CategoryConfig, Job, LocationConfig, Profile, RawJob } from "../types";
 import { looksLikeInternship, normalize, resolveLocation } from "../util";
+import { buildCandidate, scoreWithCandidate } from "./score";
 
 /**
  * Rule-based categorization — deliberately NO LLM here (keeps the scrape path
@@ -44,6 +45,8 @@ export interface FilterOptions {
   maxAgeDays: number;
   /** For the Simplify source only, drop anything dated before this ISO date. "" = off. */
   simplifyMinDate: string;
+  /** Applicant background, used to compute the rule-based match score. */
+  resumeText: string;
 }
 
 /** Source label for the SimplifyJobs list (used by the Simplify-only date cutoff). */
@@ -84,6 +87,9 @@ export function categorizeAndFilter(
     }
   }
   const hasLocationFilter = wantsRemote || wantCitySubs.length > 0;
+
+  // Precompute the candidate token set once (not per job) for match scoring.
+  const candidate = buildCandidate(opts.resumeText, opts.targetCategories);
 
   // Date window: keep only postings dated within the last `maxAgeDays` days.
   let cutoffIso = "";
@@ -127,7 +133,12 @@ export function categorizeAndFilter(
     }
 
     const { categoryHint: _hint, ...rest } = raw;
-    out.push({ ...rest, location: displayLoc, category });
+    const { score, verdict } = scoreWithCandidate(candidate, {
+      role: raw.role,
+      description: raw.description,
+      category,
+    });
+    out.push({ ...rest, location: displayLoc, category, matchScore: score, fit: verdict });
   }
   return out;
 }
@@ -147,5 +158,6 @@ export function filterOptionsFromProfile(
     locationConfig,
     maxAgeDays,
     simplifyMinDate,
+    resumeText: profile.resumeText ?? "",
   };
 }

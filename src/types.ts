@@ -21,6 +21,10 @@ export interface Job {
   description?: string;
   /** Provenance: "greenhouse" | "lever" | "ashby" | "github:<repo>". */
   source: string;
+  /** Rule-based fit score 0-100 (assigned by the categorizer). */
+  matchScore?: number;
+  /** Verdict band derived from matchScore (Strong/Good/Moderate/Weak/Poor). */
+  fit?: string;
 }
 
 /**
