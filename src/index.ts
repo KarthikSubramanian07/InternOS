@@ -2,6 +2,7 @@ import type { Env } from "./types";
 import { runScrape } from "./cron";
 import { pollPendingDrafts } from "./poll";
 import { handleWebhook } from "./webhook/handler";
+import { handleIngest } from "./ingest";
 import { computeStats } from "./analytics";
 import { handleOpen, handleClick } from "./tracking";
 import { landingPage } from "./landing";
@@ -53,6 +54,11 @@ export default {
         return new Response("forbidden", { status: 403 });
       }
       return Response.json(await computeStats(env));
+    }
+
+    // Ingest externally-scraped jobs (JobSpy companion → Indeed/Glassdoor/etc).
+    if (url.pathname === "/ingest" && req.method === "POST") {
+      return handleIngest(req, env);
     }
 
     // Manual scrape trigger, protected by the same shared secret as the webhook.

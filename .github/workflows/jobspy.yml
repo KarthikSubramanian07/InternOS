@@ -1,0 +1,34 @@
+name: JobSpy ingest
+
+# Scrapes Indeed / Glassdoor / ZipRecruiter / LinkedIn / Google for internships
+# via JobSpy (on a real runner, not the browserless Worker) and POSTs them to the
+# Worker's /ingest endpoint. Manual by default so it stays paused with the project.
+#
+# Required repo secrets (Settings → Secrets → Actions):
+#   WORKER_URL      e.g. https://internos.you.workers.dev
+#   WEBHOOK_SECRET  the same secret set on the Worker
+# Optional:
+#   JOBSPY_PROXIES  comma-separated proxies (Indeed/LinkedIn often block datacenter IPs)
+#
+# To run on a schedule later, uncomment the `schedule` block below.
+
+on:
+  workflow_dispatch:
+  # schedule:
+  #   - cron: "0 12 * * *"   # daily at 12:00 UTC
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r companion/requirements.txt
+      - name: Scrape + ingest
+        env:
+          WORKER_URL: ${{ secrets.WORKER_URL }}
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+          JOBSPY_PROXIES: ${{ secrets.JOBSPY_PROXIES }}
+        run: python companion/jobspy_ingest.py

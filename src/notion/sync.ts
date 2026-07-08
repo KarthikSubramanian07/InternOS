@@ -21,9 +21,10 @@ export async function syncJobsToNotion(
   jobs: Job[],
   env: Env,
   seen: SeenStore,
+  maxNewOverride?: number,
 ): Promise<SyncResult> {
   const notion = new NotionClient(env.NOTION_TOKEN);
-  const maxNew = clampInt(env.MAX_NEW_PER_RUN, 20, 1, 950);
+  const maxNew = maxNewOverride ?? clampInt(env.MAX_NEW_PER_RUN, 20, 1, 950);
 
   let created = 0;
   let skipped = 0;

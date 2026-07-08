@@ -22,7 +22,7 @@ import { syncJobsToNotion } from "./notion/sync";
 import { refreshBoosts } from "./analytics";
 import { SeenStore, getCursor, setCursor, loadProfile } from "./storage";
 import { hashJob, mapLimit } from "./util";
-import type { CategoryConfig, Env, Job, LocationConfig, RawJob } from "./types";
+import type { CategoryConfig, Env, Job, LocationConfig, Profile, RawJob } from "./types";
 
 type Platform = "greenhouse" | "lever" | "ashby" | "smartrecruiters" | "recruitee";
 interface BoardTask {
@@ -73,6 +73,37 @@ export async function runScrape(env: Env): Promise<string> {
 
   const allRaw: RawJob[] = [...boardRaws.flat(), ...githubRaws];
 
+  const r = await ingestRaw(env, allRaw, profile);
+  await setCursor(env.JOBS, nextCursor);
+
+  const summary =
+    `InternOS scrape: boards ${cursor}–${cursor + slice.length - 1} of ${tasks.length}, ` +
+    `raw=${allRaw.length}, matched=${r.matched}, created=${r.result.created}, ` +
+    `seen=${r.result.skipped}, deferred=${r.result.deferred}, failed=${r.result.failed}; ` +
+    `cursor→${nextCursor}, memory=${r.memory}`;
+  console.log(summary);
+  return summary;
+}
+
+export interface IngestOutcome {
+  matched: number;
+  memory: number;
+  result: Awaited<ReturnType<typeof syncJobsToNotion>>;
+}
+
+/**
+ * Shared tail of the pipeline: categorize + score + flags, dedupe against the KV
+ * seen-set, and create new Notion rows. Used by both the scheduled scrape and the
+ * /ingest endpoint (which feeds in jobs scraped elsewhere, e.g. by the JobSpy
+ * companion). `maxNew` overrides the per-run create cap (ingest does no board
+ * fetches, so it has subrequest room to create more).
+ */
+export async function ingestRaw(
+  env: Env,
+  allRaw: RawJob[],
+  profile: Profile,
+  maxNew?: number,
+): Promise<IngestOutcome> {
   // Outcome-driven recalibration: categories that reached Interview/Offer get a boost.
   const boosted = await refreshBoosts(env).catch((err) => {
     console.warn("boost refresh failed:", (err as Error).message);
@@ -92,23 +123,16 @@ export async function runScrape(env: Env): Promise<string> {
     ),
   );
 
-  // Dedupe within this run, then newest-first so fresh roles win the per-run cap.
+  // Dedupe within this batch, then newest-first so fresh roles win the create cap.
   const unique = dedupe(matched);
   unique.sort((a, b) => (b.datePosted ?? "").localeCompare(a.datePosted ?? ""));
 
   const seen = new SeenStore(env.JOBS);
   await seen.load();
-  const result = await syncJobsToNotion(unique, env, seen);
+  const result = await syncJobsToNotion(unique, env, seen, maxNew);
   await seen.save();
-  await setCursor(env.JOBS, nextCursor);
 
-  const summary =
-    `InternOS scrape: boards ${cursor}–${cursor + slice.length - 1} of ${tasks.length}, ` +
-    `raw=${allRaw.length}, matched=${unique.length}, created=${result.created}, ` +
-    `seen=${result.skipped}, deferred=${result.deferred}, failed=${result.failed}; ` +
-    `cursor→${nextCursor}, memory=${seen.size}`;
-  console.log(summary);
-  return summary;
+  return { matched: unique.length, memory: seen.size, result };
 }
 
 async function fetchBoard(task: BoardTask): Promise<RawJob[]> {

@@ -300,6 +300,31 @@ You didn't share the parent page with your integration. Open the page → **•�
 
 ---
 
+## Indeed / Glassdoor / ZipRecruiter / LinkedIn (JobSpy companion)
+
+These boards have no usable public API and are protected by anti-bot systems, proxies, and TLS fingerprinting. A browserless Cloudflare Worker cannot scrape them. So InternOS does not try to. Instead it exposes an authenticated ingest endpoint and lets [JobSpy](https://github.com/speedyapply/JobSpy) (the best open-source scraper for these sites) do the scraping on a real runner, then feed results in:
+
+```
+JobSpy (GitHub Actions / your laptop)  ──POST /ingest──▶  Worker
+   Indeed·Glassdoor·ZipRecruiter·LinkedIn                (categorize → score → flag → dedupe → Notion)
+```
+
+- **`POST /ingest`** (`src/ingest.ts`) takes `{ "jobs": [...] }`, authenticated with the same `WEBHOOK_SECRET` (`?token=` or `X-InternOS-Token`), and runs each job through the exact same pipeline as every other source (so scoring, flags, dedupe, and Notion sync all apply). Same-origin dedupe means a role already found via Greenhouse or a GitHub list will not double up.
+- **`companion/jobspy_ingest.py`** runs `pip install python-jobspy`, scrapes internships across the sites, normalizes to the InternOS schema, and POSTs in batches.
+- **`.github/workflows/jobspy.yml`** runs it (manual by default; uncomment the `schedule` to automate). Set repo secrets `WORKER_URL` and `WEBHOOK_SECRET`; add `JOBSPY_PROXIES` if you have proxies (Indeed and LinkedIn frequently block datacenter IPs, so a proxy is usually required for reliable results).
+
+Run it locally too:
+```bash
+pip install -r companion/requirements.txt
+WORKER_URL=https://internos.you.workers.dev WEBHOOK_SECRET=... python companion/jobspy_ingest.py
+```
+
+Anything else that can produce the `{company, role, url, location?, datePosted?, description?, salary?, source?}` shape can POST to `/ingest` the same way.
+
+## Handshake
+
+Handshake (joinhandshake.com) is university-SSO-gated (CalNet at Berkeley) with no public API, so there is no clean, ToS-compliant way to pull it directly from a server. The realistic path is email-based: set up a Handshake saved-search alert to your school email, and ingest those alert emails. That needs a Gmail read scope and a small parser, and is not built yet (see the issue tracker / ask to enable it).
+
 ## 🧪 Development & CI
 
 ```bash
