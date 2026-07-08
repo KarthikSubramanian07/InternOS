@@ -9,13 +9,15 @@ main = "src/index.ts"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
-# Schedules (cron triggers are free on Workers):
+# PAUSED: no scheduled runs. Nothing calls Notion/Groq/Gmail on a schedule; the
+# Worker stays deployed but idle. To RESUME, restore the crons line below and
+# run `npm run deploy`.
 #   - "0 1,13 * * *"  scrape + Notion sync + recalibration, twice daily (13:00 / 01:00 UTC)
 #   - "*/10 * * * *"  lightweight poll: draft Apply-checked rows / archive Dismissed rows
 #                     (keep this string in sync with POLL_CRON in src/index.ts)
-# To pause everything: set `crons = []` and redeploy.
 [triggers]
-crons = ["0 1,13 * * *", "*/10 * * * *"]
+crons = []
+# crons = ["0 1,13 * * *", "*/10 * * * *"]
 
 # KV namespace stores:
 #   - the set of already-seen job hashes (dedupe)
