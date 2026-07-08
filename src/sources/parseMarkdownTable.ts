@@ -48,6 +48,7 @@ interface ColumnMap {
   location: number;
   link: number;
   date: number;
+  salary: number;
 }
 
 // --- Markdown pipe tables (speedyapply, northwesternfintech) -----------------
@@ -109,9 +110,10 @@ function parsePipeTables(markdown: string, repo: RepoSource): RawJob[] {
       (cols.company !== -1 ? extractUrl(cellAt(cells, cols.company)) : "") ||
       "";
     const datePosted = cols.date !== -1 ? parseDateOrAge(cleanText(cellAt(cells, cols.date))) : null;
+    const salary = cols.salary !== -1 ? cleanText(cellAt(cells, cols.salary)) : "";
 
     if (!company || !role || !url) continue;
-    jobs.push({ company, role, location, url, datePosted, source: repo.source, categoryHint: repo.categoryHint });
+    jobs.push({ company, role, location, url, datePosted, salary, source: repo.source, categoryHint: repo.categoryHint });
   }
   return jobs;
 }
@@ -149,9 +151,10 @@ function parseHtmlTables(markdown: string, repo: RepoSource): RawJob[] {
     const location = cleanCellHtml(cells[cols.location] ?? "");
     const url = extractUrl(cells[cols.link] ?? "") || extractUrl(rawCompanyCell) || "";
     const datePosted = parseDateOrAge(cleanCellHtml(cells[cols.date] ?? ""));
+    const salary = cols.salary !== -1 ? cleanCellHtml(cells[cols.salary] ?? "") : "";
 
     if (!company || !role || !url) continue;
-    jobs.push({ company, role, location, url, datePosted, source: repo.source, categoryHint: repo.categoryHint });
+    jobs.push({ company, role, location, url, datePosted, salary, source: repo.source, categoryHint: repo.categoryHint });
   }
   return jobs;
 }
@@ -166,6 +169,7 @@ function positionalCols(cells: string[]): ColumnMap {
     location: 2,
     link: applyIdx !== -1 ? applyIdx : Math.max(1, n - 2),
     date: n - 1,
+    salary: -1,
   };
 }
 
@@ -183,6 +187,7 @@ function mapColumns(headers: string[]): ColumnMap {
     location: find(/location|loc\b|city|region/),
     link: link !== -1 ? link : Math.max(0, headers.length - 2),
     date: find(/date|posted|age/),
+    salary: find(/salary|compensation|\bpay\b|\bcomp\b/),
   };
 }
 

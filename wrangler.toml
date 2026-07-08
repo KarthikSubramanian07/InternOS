@@ -9,17 +9,13 @@ main = "src/index.ts"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
-# ⏸️  PAUSED (2026-07-06): no scheduled runs — nothing calls Notion/Groq/Gmail on a
-# schedule. The Worker stays deployed but idle. To RESUME, restore the crons line
-# below (uncomment it, remove `crons = []`) and run `npm run deploy`.
-#
-# Original schedules:
-#   - "0 1,13 * * *"  scrape + Notion sync, twice daily (13:00 / 01:00 UTC)
+# Schedules (cron triggers are free on Workers):
+#   - "0 1,13 * * *"  scrape + Notion sync + recalibration, twice daily (13:00 / 01:00 UTC)
 #   - "*/10 * * * *"  lightweight poll: draft Apply-checked rows / archive Dismissed rows
 #                     (keep this string in sync with POLL_CRON in src/index.ts)
+# To pause everything: set `crons = []` and redeploy.
 [triggers]
-crons = []
-# crons = ["0 1,13 * * *", "*/10 * * * *"]
+crons = ["0 1,13 * * *", "*/10 * * * *"]
 
 # KV namespace stores:
 #   - the set of already-seen job hashes (dedupe)
@@ -53,6 +49,11 @@ BOARD_FETCHES_PER_RUN = "20"
 # Cap new Notion rows created per run (each is one subrequest). Unwritten jobs
 # are picked up next run. Keep github(~7) + boards + new-rows under 50 on free.
 MAX_NEW_PER_RUN = "20"
+# Email open/click tracking in recruiter-email drafts. "true" embeds a pixel +
+# wraps links (requires WORKER_BASE_URL). Off by default (privacy/deliverability).
+TRACK_EMAIL_OPENS = "false"
+# Public Worker origin for tracking URLs. Set to your deployed workers.dev URL.
+WORKER_BASE_URL = "https://internos.karthik-e5e.workers.dev"
 
 # ---------------------------------------------------------------------------
 # Secrets (DO NOT put values here — set with `wrangler secret put NAME`):

@@ -53,10 +53,13 @@ export function buildCandidate(resumeText: string, targetCategories: string[]): 
   };
 }
 
-/** Score one job against a precomputed candidate (the per-job hot path). */
+/** Score one job against a precomputed candidate (the per-job hot path).
+ * `boosted` is a lowercased set of categories that have converted (Interview/Offer);
+ * a match nudges the score up so learned-good categories rank higher over time. */
 export function scoreWithCandidate(
   candidate: Candidate,
   job: { role: string; description?: string; category?: string },
+  boosted: Set<string> = new Set(),
 ): MatchResult {
   // Weight the title by repeating it; cap the description so scoring stays cheap.
   const jd = tokenSet(`${job.role} ${job.role} ${(job.description ?? "").slice(0, 800)}`);
@@ -77,6 +80,9 @@ export function scoreWithCandidate(
   }
   if (/\b(intern|internship|co-?op|new ?grad|university|student)\b/.test(title)) {
     score = score + 6;
+  }
+  if (boosted.size > 0 && boosted.has((job.category ?? "").toLowerCase())) {
+    score = score + 8; // this category has converted before
   }
   score = Math.max(0, Math.min(100, score));
 

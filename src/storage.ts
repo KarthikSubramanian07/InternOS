@@ -54,6 +54,24 @@ export async function setCursor(kv: KVNamespace, n: number): Promise<void> {
   await kv.put(CURSOR_KEY, String(n));
 }
 
+const BOOSTS_KEY = "boosts:categories";
+
+/** Categories that have converted (reached Interview/Offer) get a scoring boost. */
+export async function getBoostedCategories(kv: KVNamespace): Promise<string[]> {
+  const raw = await kv.get(BOOSTS_KEY);
+  if (!raw) return [];
+  try {
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.map(String) : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function setBoostedCategories(kv: KVNamespace, cats: string[]): Promise<void> {
+  await kv.put(BOOSTS_KEY, JSON.stringify([...new Set(cats)]));
+}
+
 export async function loadProfile(kv: KVNamespace): Promise<Profile | null> {
   const raw = await kv.get(PROFILE_KEY);
   if (!raw) return null;

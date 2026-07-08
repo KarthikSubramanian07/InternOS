@@ -1,6 +1,7 @@
 import type { Category, CategoryConfig, Job, LocationConfig, Profile, RawJob } from "../types";
 import { looksLikeInternship, normalize, resolveLocation } from "../util";
 import { buildCandidate, scoreWithCandidate } from "./score";
+import { jobFlags } from "./flags";
 
 /**
  * Rule-based categorization — deliberately NO LLM here (keeps the scrape path
@@ -47,6 +48,8 @@ export interface FilterOptions {
   simplifyMinDate: string;
   /** Applicant background, used to compute the rule-based match score. */
   resumeText: string;
+  /** Categories that have converted (Interview/Offer) get a scoring boost. */
+  boostedCategories: string[];
 }
 
 /** Source label for the SimplifyJobs list (used by the Simplify-only date cutoff). */
@@ -88,8 +91,9 @@ export function categorizeAndFilter(
   }
   const hasLocationFilter = wantsRemote || wantCitySubs.length > 0;
 
-  // Precompute the candidate token set once (not per job) for match scoring.
+  // Precompute the candidate token set + boosted categories once (not per job).
   const candidate = buildCandidate(opts.resumeText, opts.targetCategories);
+  const boosted = new Set(opts.boostedCategories.map((c) => c.toLowerCase()));
 
   // Date window: keep only postings dated within the last `maxAgeDays` days.
   let cutoffIso = "";
@@ -133,12 +137,13 @@ export function categorizeAndFilter(
     }
 
     const { categoryHint: _hint, ...rest } = raw;
-    const { score, verdict } = scoreWithCandidate(candidate, {
-      role: raw.role,
-      description: raw.description,
-      category,
-    });
-    out.push({ ...rest, location: displayLoc, category, matchScore: score, fit: verdict });
+    const { score, verdict } = scoreWithCandidate(
+      candidate,
+      { role: raw.role, description: raw.description, category },
+      boosted,
+    );
+    const flags = jobFlags({ role: raw.role, description: raw.description });
+    out.push({ ...rest, location: displayLoc, category, matchScore: score, fit: verdict, flags });
   }
   return out;
 }
@@ -150,6 +155,7 @@ export function filterOptionsFromProfile(
   maxAgeDays: number,
   simplifyMinDate: string,
   locationConfig: LocationConfig,
+  boostedCategories: string[] = [],
 ): FilterOptions {
   return {
     internshipsOnly,
@@ -159,5 +165,6 @@ export function filterOptionsFromProfile(
     maxAgeDays,
     simplifyMinDate,
     resumeText: profile.resumeText ?? "",
+    boostedCategories,
   };
 }

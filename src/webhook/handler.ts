@@ -92,10 +92,15 @@ async function processDrafting(pageId: string, env: Env): Promise<void> {
 
   let gmailLink: string | null = null;
   try {
-    gmailLink = await createGmailDraft(env, {
-      subject: drafts.recruiter_email.subject,
-      body: drafts.recruiter_email.body,
-    });
+    const tracking =
+      env.TRACK_EMAIL_OPENS === "true" && env.WORKER_BASE_URL
+        ? { pageId, baseUrl: env.WORKER_BASE_URL }
+        : undefined;
+    gmailLink = await createGmailDraft(
+      env,
+      { subject: drafts.recruiter_email.subject, body: drafts.recruiter_email.body },
+      tracking,
+    );
   } catch (err) {
     console.warn("Gmail draft skipped:", (err as Error).message);
   }

@@ -7,7 +7,11 @@ const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const OUTPUT_SHAPE = `{
   "resume_bullets": ["string", "..."],
   "cover_letter": "string",
-  "recruiter_email": { "subject": "string", "body": "string" }
+  "recruiter_email": { "subject": "string", "body": "string" },
+  "matched_keywords": ["string", "..."],
+  "missing_keywords": ["string", "..."],
+  "screening_answers": [{ "question": "string", "answer": "string" }],
+  "star_stories": ["string", "..."]
 }`;
 
 // Phrases that read as generic AI filler. The model is told to avoid them, and we
@@ -142,6 +146,10 @@ function buildDrafterMessages(job: PageJob, profile: Profile): ChatMessage[] {
     "1. resume_bullets: 3 to 5 bullets, each starting with a strong action verb, quantified where the background supports it, chosen to match this role. Just the text, no leading bullet character.",
     "2. cover_letter: 150 to 220 words, addressed to \"Dear Hiring Team\", specific to the company and role, forward-looking (what you can do for them, not only what you have done), opening with a concrete hook.",
     "3. recruiter_email: a short cold outreach email. subject at most 8 words. body at most 150 words, warm and direct, with one clear ask (a brief chat or consideration), signed with the applicant's name. Do NOT include a \"To:\" line; the applicant fills the recipient in.",
+    "4. matched_keywords: important skills/keywords from the job description that the applicant genuinely has (grounded in the background).",
+    "5. missing_keywords: important job-description keywords the applicant does NOT have. Be honest. Do NOT add these to the drafts; they are gaps to be aware of, never stuffed.",
+    "6. screening_answers: 2 to 3 truthful draft answers to common application questions for this role (for example: why this company, work authorization, available start date), each grounded in the background.",
+    "7. star_stories: 2 to 3 concise STAR interview stories drawn from the applicant's real background and mapped to what this role needs.",
   ].join("\n");
 
   return [
@@ -215,10 +223,12 @@ function roleBlock(job: PageJob): string {
     .join("\n");
 }
 
+function strList(v: unknown): string[] {
+  return Array.isArray(v) ? v.map((x) => String(x)).filter(Boolean) : [];
+}
+
 function validate(parsed: any): DraftResult {
-  const bullets = Array.isArray(parsed?.resume_bullets)
-    ? parsed.resume_bullets.map((b: unknown) => String(b)).filter(Boolean)
-    : [];
+  const bullets = strList(parsed?.resume_bullets);
   const coverLetter = typeof parsed?.cover_letter === "string" ? parsed.cover_letter : "";
   const email = parsed?.recruiter_email ?? {};
   const subject = typeof email.subject === "string" ? email.subject : "";
@@ -227,10 +237,21 @@ function validate(parsed: any): DraftResult {
   if (!bullets.length && !coverLetter && !body) {
     throw new Error("Groq output missing all fields");
   }
+
+  const screening = Array.isArray(parsed?.screening_answers)
+    ? parsed.screening_answers
+        .map((x: any) => ({ question: String(x?.question ?? ""), answer: String(x?.answer ?? "") }))
+        .filter((x: { question: string; answer: string }) => x.question || x.answer)
+    : [];
+
   return {
     resume_bullets: bullets,
     cover_letter: coverLetter,
     recruiter_email: { subject, body },
+    matched_keywords: strList(parsed?.matched_keywords),
+    missing_keywords: strList(parsed?.missing_keywords),
+    screening_answers: screening,
+    star_stories: strList(parsed?.star_stories),
   };
 }
 
@@ -243,5 +264,12 @@ export function sanitize(r: DraftResult): DraftResult {
       subject: stripDashes(r.recruiter_email.subject),
       body: stripDashes(r.recruiter_email.body),
     },
+    matched_keywords: r.matched_keywords.map(stripDashes),
+    missing_keywords: r.missing_keywords.map(stripDashes),
+    screening_answers: r.screening_answers.map((s) => ({
+      question: stripDashes(s.question),
+      answer: stripDashes(s.answer),
+    })),
+    star_stories: r.star_stories.map(stripDashes),
   };
 }

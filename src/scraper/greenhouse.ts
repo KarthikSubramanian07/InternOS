@@ -1,5 +1,6 @@
 import type { RawJob } from "../types";
 import { fetchWithTimeout, toIsoDate } from "../util";
+import { parseSalary } from "./salary";
 
 interface GreenhouseJob {
   title: string;
@@ -32,8 +33,9 @@ export async function fetchGreenhouse(boardToken: string): Promise<RawJob[]> {
     url: j.absolute_url,
     datePosted: toIsoDate(j.updated_at),
     // Store the raw (entity-encoded) HTML, truncated. It's cleaned to plain text
-    // only when a row is actually written to Notion — see jobToCreateProperties.
+    // only when a row is actually written to Notion (see jobToCreateProperties).
     description: (j.content ?? "").slice(0, 3000),
+    salary: parseSalary(j.content),
     source: "greenhouse",
   }));
 }

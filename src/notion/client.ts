@@ -48,11 +48,11 @@ export class NotionClient {
     return this.request(`/pages/${encodeURIComponent(pageId)}`, "PATCH", { archived: true });
   }
 
-  queryDatabase(databaseId: string, filter: unknown, pageSize = 25): Promise<any> {
-    return this.request(`/databases/${encodeURIComponent(databaseId)}/query`, "POST", {
-      filter,
-      page_size: pageSize,
-    });
+  queryDatabase(databaseId: string, filter: unknown, pageSize = 25, startCursor?: string): Promise<any> {
+    const body: Record<string, unknown> = { page_size: pageSize };
+    if (filter) body.filter = filter;
+    if (startCursor) body.start_cursor = startCursor;
+    return this.request(`/databases/${encodeURIComponent(databaseId)}/query`, "POST", body);
   }
 }
 
@@ -88,9 +88,11 @@ export function jobToCreateProperties(job: Job): Record<string, unknown> {
     [P.fit]: val.select(job.fit ?? null),
     [P.matchScore]: val.number(job.matchScore),
     [P.location]: val.richText(job.location),
+    [P.salary]: val.richText(job.salary ?? ""),
     [P.link]: val.url(job.url),
     [P.source]: val.select(platformLabel(job.source)),
     [P.datePosted]: val.date(job.datePosted),
+    [P.flags]: val.richText(job.flags ?? ""),
     [P.status]: val.select("Not Applied"),
     [P.apply]: val.checkbox(false),
     [P.dismiss]: val.checkbox(false),
@@ -108,10 +110,15 @@ export function draftsToUpdateProperties(input: {
   const { drafts, gmailDraftLink } = input;
   const bullets = drafts.resume_bullets.map((b) => `• ${b}`).join("\n");
   const email = `Subject: ${drafts.recruiter_email.subject}\n\n${drafts.recruiter_email.body}`;
+  const screening = drafts.screening_answers.map((s) => `Q: ${s.question}\nA: ${s.answer}`).join("\n\n");
+  const star = drafts.star_stories.map((s) => `• ${s}`).join("\n\n");
   const props: Record<string, unknown> = {
     [P.resumeDraft]: val.richText(bullets),
     [P.coverLetterDraft]: val.richText(drafts.cover_letter),
     [P.recruiterEmailDraft]: val.richText(email),
+    [P.screeningAnswers]: val.richText(screening),
+    [P.starStories]: val.richText(star),
+    [P.missingKeywords]: val.richText(drafts.missing_keywords.join(", ")),
   };
   if (gmailDraftLink) props[P.gmailDraftLink] = val.url(gmailDraftLink);
   return props;

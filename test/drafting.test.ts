@@ -20,6 +20,10 @@ describe("sanitize (drafting output guarantee)", () => {
       resume_bullets: ["Built X — shipped it", "Led Y – the team"],
       cover_letter: "I am writing — because I care",
       recruiter_email: { subject: "Intern — SWE", body: "Hello — I'd love to chat" },
+      matched_keywords: ["react — hooks"],
+      missing_keywords: [],
+      screening_answers: [{ question: "Why — us?", answer: "Because — X" }],
+      star_stories: ["Did X — got Y"],
     });
     const all = [...out.resume_bullets, out.cover_letter, out.recruiter_email.subject, out.recruiter_email.body].join(" ");
     expect(all).not.toMatch(/[—–]/);

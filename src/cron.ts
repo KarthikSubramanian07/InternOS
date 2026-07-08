@@ -3,22 +3,28 @@ import locationsConfig from "../config/locations.json";
 import greenhouseTokens from "../config/companies-greenhouse.json";
 import leverTokens from "../config/companies-lever.json";
 import ashbyTokens from "../config/companies-ashby.json";
+import smartRecruitersTokens from "../config/companies-smartrecruiters.json";
+import recruiteeTokens from "../config/companies-recruitee.json";
 
 import { fetchGreenhouse } from "./scraper/greenhouse";
 import { fetchLever } from "./scraper/lever";
 import { fetchAshby } from "./scraper/ashby";
+import { fetchSmartRecruiters } from "./scraper/smartrecruiters";
+import { fetchRecruitee } from "./scraper/recruitee";
 import { fetchSimplifyJobs } from "./sources/simplifyJobs";
 import { fetchVanshb03 } from "./sources/vanshb03";
 import { fetchSpeedyApply } from "./sources/speedyapply";
 import { fetchNuftQuant } from "./sources/nuftQuant";
+import { fetchRemotive } from "./sources/remotive";
 
 import { categorizeAndFilter, filterOptionsFromProfile } from "./filters/categorize";
 import { syncJobsToNotion } from "./notion/sync";
+import { refreshBoosts } from "./analytics";
 import { SeenStore, getCursor, setCursor, loadProfile } from "./storage";
 import { hashJob, mapLimit } from "./util";
 import type { CategoryConfig, Env, Job, LocationConfig, RawJob } from "./types";
 
-type Platform = "greenhouse" | "lever" | "ashby";
+type Platform = "greenhouse" | "lever" | "ashby" | "smartrecruiters" | "recruitee";
 interface BoardTask {
   platform: Platform;
   token: string;
@@ -45,6 +51,8 @@ export async function runScrape(env: Env): Promise<string> {
     ...(greenhouseTokens as string[]).map((token) => ({ platform: "greenhouse" as const, token })),
     ...(leverTokens as string[]).map((token) => ({ platform: "lever" as const, token })),
     ...(ashbyTokens as string[]).map((token) => ({ platform: "ashby" as const, token })),
+    ...(smartRecruitersTokens as string[]).map((token) => ({ platform: "smartrecruiters" as const, token })),
+    ...(recruiteeTokens as string[]).map((token) => ({ platform: "recruitee" as const, token })),
   ];
 
   const window = clampInt(env.BOARD_FETCHES_PER_RUN, 20, 1, 900);
@@ -65,6 +73,12 @@ export async function runScrape(env: Env): Promise<string> {
 
   const allRaw: RawJob[] = [...boardRaws.flat(), ...githubRaws];
 
+  // Outcome-driven recalibration: categories that reached Interview/Offer get a boost.
+  const boosted = await refreshBoosts(env).catch((err) => {
+    console.warn("boost refresh failed:", (err as Error).message);
+    return [] as string[];
+  });
+
   const matched = categorizeAndFilter(
     allRaw,
     categoriesConfig as CategoryConfig,
@@ -74,6 +88,7 @@ export async function runScrape(env: Env): Promise<string> {
       clampInt(env.MAX_AGE_DAYS, 31, 0, 3650),
       env.SIMPLIFY_MIN_DATE ?? "",
       locationsConfig as LocationConfig,
+      boosted,
     ),
   );
 
@@ -98,21 +113,32 @@ export async function runScrape(env: Env): Promise<string> {
 
 async function fetchBoard(task: BoardTask): Promise<RawJob[]> {
   try {
-    if (task.platform === "greenhouse") return await fetchGreenhouse(task.token);
-    if (task.platform === "lever") return await fetchLever(task.token);
-    return await fetchAshby(task.token);
+    switch (task.platform) {
+      case "greenhouse":
+        return await fetchGreenhouse(task.token);
+      case "lever":
+        return await fetchLever(task.token);
+      case "ashby":
+        return await fetchAshby(task.token);
+      case "smartrecruiters":
+        return await fetchSmartRecruiters(task.token);
+      case "recruitee":
+        return await fetchRecruitee(task.token);
+    }
   } catch (err) {
     console.warn(`${task.platform} ${task.token}: ${(err as Error).message}`);
-    return [];
   }
+  return [];
 }
 
 async function fetchGithubLists(): Promise<RawJob[]> {
+  // Curated GitHub lists + always-on single-endpoint API sources (Remotive).
   const results = await Promise.allSettled([
     fetchSimplifyJobs(),
     fetchVanshb03(),
     fetchSpeedyApply(),
     fetchNuftQuant(),
+    fetchRemotive(),
   ]);
   const out: RawJob[] = [];
   for (const r of results) {

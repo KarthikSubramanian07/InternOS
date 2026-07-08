@@ -1,5 +1,6 @@
 import type { RawJob } from "../types";
 import { fetchWithTimeout, toIsoDate } from "../util";
+import { formatRange, parseSalary } from "./salary";
 
 interface LeverPosting {
   text: string;
@@ -7,6 +8,7 @@ interface LeverPosting {
   applyUrl?: string;
   createdAt?: number;
   categories?: { location?: string; team?: string; commitment?: string };
+  salaryRange?: { min?: number; max?: number; currency?: string; interval?: string };
   descriptionPlain?: string;
   description?: string; // HTML
 }
@@ -34,6 +36,7 @@ export async function fetchLever(company: string): Promise<RawJob[]> {
     datePosted: toIsoDate(p.createdAt),
     // Raw text/HTML, truncated; cleaned at Notion-write time only.
     description: (p.descriptionPlain || p.description || "").slice(0, 3000),
+    salary: formatRange(p.salaryRange) || parseSalary(p.descriptionPlain || p.description),
     source: "lever",
   }));
 }

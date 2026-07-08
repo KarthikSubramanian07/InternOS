@@ -67,6 +67,10 @@ describe("draftsToUpdateProperties", () => {
     resume_bullets: ["Did X", "Did Y"],
     cover_letter: "Dear Hiring Team, ...",
     recruiter_email: { subject: "Intern interest", body: "Hi there," },
+    matched_keywords: ["python"],
+    missing_keywords: ["kubernetes"],
+    screening_answers: [{ question: "Why us?", answer: "Because X." }],
+    star_stories: ["Situation... Task... Action... Result."],
   };
   it("formats bullets, cover letter, and email; includes the gmail link when present", () => {
     const props = draftsToUpdateProperties({ drafts, gmailDraftLink: "https://mail.google.com/#drafts" }) as Record<string, any>;

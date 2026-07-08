@@ -1,5 +1,6 @@
 import type { RawJob } from "../types";
 import { fetchWithTimeout, toIsoDate } from "../util";
+import { parseSalary } from "./salary";
 
 interface AshbyJob {
   title: string;
@@ -10,6 +11,7 @@ interface AshbyJob {
   publishedAt?: string;
   employmentType?: string;
   isListed?: boolean;
+  compensationTierSummary?: string;
   descriptionPlain?: string;
   descriptionHtml?: string;
 }
@@ -19,7 +21,7 @@ interface AshbyJob {
  * Public endpoint, no auth: https://api.ashbyhq.com/posting-api/job-board/{name}
  */
 export async function fetchAshby(boardName: string): Promise<RawJob[]> {
-  const url = `https://api.ashbyhq.com/posting-api/job-board/${encodeURIComponent(boardName)}?includeCompensation=false`;
+  const url = `https://api.ashbyhq.com/posting-api/job-board/${encodeURIComponent(boardName)}?includeCompensation=true`;
   const res = await fetchWithTimeout(url, {
     headers: { "User-Agent": "InternOS/0.1 (+https://github.com/internos)" },
   });
@@ -38,6 +40,7 @@ export async function fetchAshby(boardName: string): Promise<RawJob[]> {
     datePosted: toIsoDate(j.publishedAt),
     // Raw text/HTML, truncated; cleaned at Notion-write time only.
     description: (j.descriptionPlain || j.descriptionHtml || "").slice(0, 3000),
+    salary: j.compensationTierSummary?.trim() || parseSalary(j.descriptionPlain || j.descriptionHtml),
     source: "ashby",
   }));
 }

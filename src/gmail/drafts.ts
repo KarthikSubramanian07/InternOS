@@ -9,16 +9,22 @@ const DRAFTS_URL = "https://gmail.googleapis.com/gmail/v1/users/me/drafts";
  * Returns a link to the drafts folder. Throws if Gmail isn't configured, which
  * the caller treats as non-fatal (drafts still get written into Notion).
  */
+export interface Tracking {
+  pageId: string;
+  baseUrl: string;
+}
+
 export async function createGmailDraft(
   env: Env,
   msg: { subject: string; body: string; to?: string },
+  tracking?: Tracking,
 ): Promise<string> {
   if (!env.GMAIL_REFRESH_TOKEN || !env.GMAIL_CLIENT_ID || !env.GMAIL_CLIENT_SECRET) {
     throw new Error("Gmail not configured (missing client id/secret/refresh token)");
   }
 
   const accessToken = await getAccessToken(env);
-  const raw = base64UrlEncode(buildMime(msg));
+  const raw = base64UrlEncode(tracking ? buildHtmlMime(msg, tracking) : buildMime(msg));
 
   const res = await fetchWithTimeout(
     DRAFTS_URL,
@@ -80,6 +86,40 @@ function buildMime(msg: { subject: string; body: string; to?: string }): string 
 /** Strip CR/LF so a header value (subject/to) can't inject extra MIME headers. */
 export function headerSafe(v: string): string {
   return v.replace(/[\r\n]+/g, " ").trim();
+}
+
+/** HTML message with a tracking pixel and click-wrapped links (open/click tracking). */
+function buildHtmlMime(msg: { subject: string; body: string; to?: string }, t: Tracking): string {
+  const base = t.baseUrl.replace(/\/$/, "");
+  const pixel = `<img src="${base}/t/o/${t.pageId}" width="1" height="1" alt="" style="display:none">`;
+  const headers = [
+    `To: ${headerSafe(msg.to ?? "")}`,
+    `Subject: ${encodeSubject(headerSafe(msg.subject))}`,
+    "MIME-Version: 1.0",
+    'Content-Type: text/html; charset="UTF-8"',
+    "Content-Transfer-Encoding: 8bit",
+  ];
+  const html = `<!doctype html><html><body>${bodyToHtml(msg.body, base, t.pageId)}${pixel}</body></html>`;
+  return `${headers.join("\r\n")}\r\n\r\n${html}`;
+}
+
+function bodyToHtml(text: string, base: string, pageId: string): string {
+  const urlRe = /(https?:\/\/[^\s<>()]+)/g;
+  let out = "";
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = urlRe.exec(text))) {
+    out += htmlEscape(text.slice(last, m.index));
+    const wrapped = `${base}/t/c/${pageId}?u=${encodeURIComponent(m[1])}`;
+    out += `<a href="${htmlEscape(wrapped)}">${htmlEscape(m[1])}</a>`;
+    last = m.index + m[1].length;
+  }
+  out += htmlEscape(text.slice(last));
+  return out.replace(/\n/g, "<br>\n");
+}
+
+function htmlEscape(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
 function encodeSubject(subject: string): string {

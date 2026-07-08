@@ -41,6 +41,7 @@ function opts(overrides: Partial<FilterOptions> = {}): FilterOptions {
     maxAgeDays: 0,
     simplifyMinDate: "",
     resumeText: "python typescript react distributed systems machine learning",
+    boostedCategories: [],
     ...overrides,
   };
 }

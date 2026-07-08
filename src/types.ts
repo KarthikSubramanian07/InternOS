@@ -25,6 +25,10 @@ export interface Job {
   matchScore?: number;
   /** Verdict band derived from matchScore (Strong/Good/Moderate/Weak/Poor). */
   fit?: string;
+  /** Compensation string if the source exposes one (e.g. "$45-60/hr"). */
+  salary?: string;
+  /** Rule-based quality/ghost-job flags (e.g. "Evergreen posting"). */
+  flags?: string;
 }
 
 /**
@@ -69,6 +73,10 @@ export interface Env {
   SIMPLIFY_MIN_DATE: string;
   BOARD_FETCHES_PER_RUN: string;
   MAX_NEW_PER_RUN: string;
+  /** "true" to embed open/click tracking in recruiter-email Gmail drafts. */
+  TRACK_EMAIL_OPENS: string;
+  /** Public Worker origin, used to build tracking pixel/click URLs (e.g. https://internos.you.workers.dev). */
+  WORKER_BASE_URL: string;
 
   // secrets (wrangler secret put ...)
   NOTION_TOKEN: string;
@@ -88,4 +96,12 @@ export interface DraftResult {
     subject: string;
     body: string;
   };
+  /** JD keywords the drafts genuinely cover (grounded in the applicant's background). */
+  matched_keywords: string[];
+  /** Important JD keywords the applicant lacks (honest gaps; never stuffed into drafts). */
+  missing_keywords: string[];
+  /** Draft answers to common screening questions for this role. */
+  screening_answers: Array<{ question: string; answer: string }>;
+  /** STAR interview stories mapped to the role, drawn from the applicant's background. */
+  star_stories: string[];
 }

@@ -2,6 +2,8 @@ import type { Env } from "./types";
 import { runScrape } from "./cron";
 import { pollPendingDrafts } from "./poll";
 import { handleWebhook } from "./webhook/handler";
+import { computeStats } from "./analytics";
+import { handleOpen, handleClick } from "./tracking";
 import { landingPage } from "./landing";
 import { timingSafeEqual } from "./util";
 
@@ -34,6 +36,23 @@ export default {
 
     if (url.pathname === "/health") {
       return Response.json({ ok: true, service: "internos" });
+    }
+
+    // Email open tracking: 1x1 pixel. Public (no secret) — recipients hit it.
+    if (url.pathname.startsWith("/t/o/")) {
+      return handleOpen(url.pathname.slice("/t/o/".length), env, ctx);
+    }
+    // Email click tracking: log + redirect to ?u=<target>.
+    if (url.pathname.startsWith("/t/c/")) {
+      return handleClick(url.pathname.slice("/t/c/".length), url.searchParams.get("u") ?? "", env, ctx);
+    }
+
+    // Application-funnel analytics (protected by the shared secret).
+    if (url.pathname === "/stats") {
+      if (!env.WEBHOOK_SECRET || !timingSafeEqual(url.searchParams.get("token") ?? "", env.WEBHOOK_SECRET)) {
+        return new Response("forbidden", { status: 403 });
+      }
+      return Response.json(await computeStats(env));
     }
 
     // Manual scrape trigger, protected by the same shared secret as the webhook.
