@@ -250,7 +250,7 @@ function cleanText(cell: string): string {
     .replace(/\*\*|__|`/g, "")
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
-    .replace(/[🔒🎓🛂🇺🇸➕]/gu, "")
+    .replace(/🔒|🎓|🛂|🇺🇸|➕/gu, "")
     .replace(/\s+/g, " ")
     .trim();
 }

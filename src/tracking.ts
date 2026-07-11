@@ -29,16 +29,30 @@ export async function handleOpen(pageId: string, env: Env, ctx: ExecutionContext
 
 /** GET /t/c/{pageId}?u=<url>: record a click, then redirect to the real link. */
 export async function handleClick(pageId: string, target: string, env: Env, ctx: ExecutionContext): Promise<Response> {
-  let dest: string;
+  let dest: URL;
   try {
-    dest = new URL(target).toString();
+    dest = new URL(target);
   } catch {
+    return new Response("bad target", { status: 400 });
+  }
+  // Only allow http(s) redirects — never javascript:/data:/etc.
+  if (dest.protocol !== "http:" && dest.protocol !== "https:") {
     return new Response("bad target", { status: 400 });
   }
   if (UUID.test(pageId)) {
     ctx.waitUntil(bump(env, `clicks:${pageId}`).catch(() => {}));
   }
-  return Response.redirect(dest, 302);
+  return Response.redirect(dest.toString(), 302);
+}
+
+/** Exported for unit tests. */
+export function isSafeRedirectTarget(target: string): boolean {
+  try {
+    const u = new URL(target);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 async function recordOpen(pageId: string, env: Env): Promise<void> {

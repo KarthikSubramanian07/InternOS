@@ -38,7 +38,7 @@ export async function handleWebhook(
 
   // Notion's newer webhook integrations send a one-time verification handshake.
   if (payload?.verification_token && !extractPageId(payload)) {
-    console.log("Notion verification_token received:", payload.verification_token);
+    console.log("Notion verification_token received (value omitted)");
     return Response.json({ ok: true, status: "verified" });
   }
 
