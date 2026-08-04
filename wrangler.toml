@@ -54,8 +54,9 @@ MAX_NEW_PER_RUN = "20"
 # Email open/click tracking in recruiter-email drafts. "true" embeds a pixel +
 # wraps links (requires WORKER_BASE_URL). Off by default (privacy/deliverability).
 TRACK_EMAIL_OPENS = "false"
-# Public Worker origin for tracking URLs. Set to your deployed workers.dev URL.
-WORKER_BASE_URL = "https://internos.karthik-e5e.workers.dev"
+# Public Worker origin for tracking URLs. Set to your own deployed workers.dev
+# URL (only used when TRACK_EMAIL_OPENS = "true").
+WORKER_BASE_URL = "https://your-worker.workers.dev"
 
 # ---------------------------------------------------------------------------
 # Secrets (DO NOT put values here — set with `wrangler secret put NAME`):
