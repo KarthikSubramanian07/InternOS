@@ -1,15 +1,18 @@
 name: Deploy
 
-# Deploys to Cloudflare Workers on every push to main, after typecheck + tests pass.
+# Deploys to Cloudflare Workers. MANUAL ONLY (Actions tab → Deploy → Run workflow)
+# so pushes to main never fail on a deploy step, and the project stays paused.
 #
 # Requires a repo secret CLOUDFLARE_API_TOKEN (Settings → Secrets and variables →
-# Actions). Create the token at dash.cloudflare.com → My Profile → API Tokens →
+# Actions). Create a VALID token at dash.cloudflare.com → My Profile → API Tokens →
 # "Edit Cloudflare Workers" template. Worker secrets (NOTION_TOKEN, GROQ_API_KEY,
 # etc.) live in Cloudflare and persist across deploys — they are NOT set here.
+#
+# To re-enable auto-deploy on every push to main, add back:
+#   push:
+#     branches: [main]
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:
