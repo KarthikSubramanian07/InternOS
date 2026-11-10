@@ -9,7 +9,7 @@ InternOS is a Cloudflare Worker. The only browser UI it serves is the public sta
 ## How it was checked
 
 - axe-core (tags `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`, `wcag22aa`) on `/` at 1440×900, 390×844, and 320×800
-- Keyboard tab order, visible focus, landmarks, headings, link cues that are not colour alone, target size, and `prefers-reduced-motion` for the status pulse
+- Keyboard tab order, visible focus, landmarks, headings, link cues that are not colour alone, target size, and no continuous motion on the status badge
 
 ## Known limitations
 
